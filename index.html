@@ -293,15 +293,125 @@
                             let method = 'Unknown';
                             if (evolution.evolution_details && evolution.evolution_details.length > 0) {
                                 const detail = evolution.evolution_details[0];
-                                if (detail.min_level) {
-                                    method = `Level ${detail.min_level}`;
-                                } else if (detail.item) {
-                                    method = detail.item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                const parts = [];
+
+                                // Start with trigger type
+                                if (detail.trigger.name === 'level-up') {
+                                    if (detail.min_level) {
+                                        parts.push(`Level ${detail.min_level}`);
+                                    } else {
+                                        parts.push('Level up');
+                                    }
                                 } else if (detail.trigger.name === 'trade') {
-                                    method = 'Trade';
+                                    parts.push('Trade');
+                                } else if (detail.trigger.name === 'use-item') {
+                                    parts.push('Use');
+                                } else if (detail.trigger.name === 'shed') {
+                                    parts.push('Level up (empty party slot + Poké Ball)');
                                 } else {
-                                    method = detail.trigger.name.charAt(0).toUpperCase() + detail.trigger.name.slice(1);
+                                    parts.push(detail.trigger.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
                                 }
+
+                                // Add item information
+                                if (detail.item) {
+                                    const itemName = detail.item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    if (detail.trigger.name === 'use-item') {
+                                        parts[0] = itemName;
+                                    } else {
+                                        parts.push(`+ ${itemName}`);
+                                    }
+                                }
+
+                                // Add held item
+                                if (detail.held_item) {
+                                    const heldItemName = detail.held_item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`holding ${heldItemName}`);
+                                }
+
+                                // Add happiness requirement
+                                if (detail.min_happiness) {
+                                    parts.push(`with ${detail.min_happiness}+ happiness`);
+                                }
+
+                                // Add affection requirement
+                                if (detail.min_affection) {
+                                    parts.push(`with ${detail.min_affection}+ affection`);
+                                }
+
+                                // Add beauty requirement
+                                if (detail.min_beauty) {
+                                    parts.push(`with ${detail.min_beauty}+ beauty`);
+                                }
+
+                                // Add time of day
+                                if (detail.time_of_day) {
+                                    parts.push(`during ${detail.time_of_day}`);
+                                }
+
+                                // Add location
+                                if (detail.location) {
+                                    const locationName = detail.location.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`at ${locationName}`);
+                                }
+
+                                // Add move requirement
+                                if (detail.known_move) {
+                                    const moveName = detail.known_move.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`knowing ${moveName}`);
+                                }
+
+                                // Add move type requirement
+                                if (detail.known_move_type) {
+                                    const moveType = detail.known_move_type.name.charAt(0).toUpperCase() + detail.known_move_type.name.slice(1);
+                                    parts.push(`knowing ${moveType}-type move`);
+                                }
+
+                                // Add party species requirement
+                                if (detail.party_species) {
+                                    const speciesName = detail.party_species.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`with ${speciesName} in party`);
+                                }
+
+                                // Add party type requirement
+                                if (detail.party_type) {
+                                    const partyType = detail.party_type.name.charAt(0).toUpperCase() + detail.party_type.name.slice(1);
+                                    parts.push(`with ${partyType}-type in party`);
+                                }
+
+                                // Add physical stats requirement
+                                if (detail.relative_physical_stats !== null) {
+                                    if (detail.relative_physical_stats === 1) {
+                                        parts.push('(Attack > Defense)');
+                                    } else if (detail.relative_physical_stats === -1) {
+                                        parts.push('(Attack < Defense)');
+                                    } else if (detail.relative_physical_stats === 0) {
+                                        parts.push('(Attack = Defense)');
+                                    }
+                                }
+
+                                // Add gender requirement
+                                if (detail.gender !== null) {
+                                    const genderText = detail.gender === 1 ? 'Female' : 'Male';
+                                    parts.push(`(${genderText} only)`);
+                                }
+
+                                // Add overworld rain requirement
+                                if (detail.needs_overworld_rain) {
+                                    parts.push('during rain');
+                                }
+
+                                // Add turn upside down requirement
+                                if (detail.turn_upside_down) {
+                                    parts.push('(turn device upside down)');
+                                }
+
+                                // Add trade species requirement
+                                if (detail.trade_species) {
+                                    const tradeSpeciesName = detail.trade_species.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`for ${tradeSpeciesName}`);
+                                }
+
+                                method = parts.join(' ');
                             }
                             parseEvolution(evolution, method);
                         });
