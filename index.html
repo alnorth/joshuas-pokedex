@@ -293,6 +293,10 @@
                             let method = 'Unknown';
                             if (evolution.evolution_details && evolution.evolution_details.length > 0) {
                                 const detail = evolution.evolution_details[0];
+
+                                // Debug: log evolution details to see what fields are present
+                                console.log('Evolution details for', evolution.species.name, ':', detail);
+
                                 const parts = [];
 
                                 // Start with trigger type
@@ -409,6 +413,37 @@
                                 if (detail.trade_species) {
                                     const tradeSpeciesName = detail.trade_species.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
                                     parts.push(`for ${tradeSpeciesName}`);
+                                }
+
+                                // Check for additional unhandled fields and add them as hints
+                                const handledFields = [
+                                    'trigger', 'item', 'held_item', 'min_level', 'min_happiness', 'min_affection',
+                                    'min_beauty', 'time_of_day', 'location', 'known_move', 'known_move_type',
+                                    'party_species', 'party_type', 'relative_physical_stats', 'gender',
+                                    'needs_overworld_rain', 'turn_upside_down', 'trade_species'
+                                ];
+
+                                // Look for any fields we haven't handled yet
+                                const unhandledInfo = [];
+                                Object.keys(detail).forEach(key => {
+                                    if (!handledFields.includes(key) && detail[key] !== null && detail[key] !== false && detail[key] !== '') {
+                                        // Format the field name and value
+                                        const fieldName = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                        let value = detail[key];
+
+                                        // Handle different value types
+                                        if (typeof value === 'object' && value.name) {
+                                            value = value.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                        } else if (typeof value === 'boolean') {
+                                            value = value ? 'Yes' : 'No';
+                                        }
+
+                                        unhandledInfo.push(`${fieldName}: ${value}`);
+                                    }
+                                });
+
+                                if (unhandledInfo.length > 0) {
+                                    parts.push(`(${unhandledInfo.join(', ')})`);
                                 }
 
                                 method = parts.join(' ');

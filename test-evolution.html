@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Evolution Data</title>
+</head>
+<body>
+    <h1>Testing Primeape Evolution Data</h1>
+    <pre id="output">Loading...</pre>
+
+    <script>
+        async function testEvolution() {
+            try {
+                // Get Primeape's species data
+                const speciesResponse = await fetch('https://pokeapi.co/api/v2/pokemon-species/57');
+                const speciesData = await speciesResponse.json();
+
+                // Get evolution chain
+                const evolutionResponse = await fetch(speciesData.evolution_chain.url);
+                const evolutionData = await evolutionResponse.json();
+
+                // Find Annihilape evolution details
+                let annihilapeDetails = null;
+
+                function searchChain(chain) {
+                    if (chain.species.name === 'primeape' && chain.evolves_to.length > 0) {
+                        chain.evolves_to.forEach(evo => {
+                            if (evo.species.name === 'annihilape') {
+                                annihilapeDetails = evo.evolution_details;
+                            }
+                        });
+                    }
+                    chain.evolves_to.forEach(evo => searchChain(evo));
+                }
+
+                searchChain(evolutionData.chain);
+
+                if (annihilapeDetails) {
+                    document.getElementById('output').textContent = JSON.stringify(annihilapeDetails, null, 2);
+                } else {
+                    document.getElementById('output').textContent = 'Annihilape evolution not found. Full chain:\n\n' + JSON.stringify(evolutionData.chain, null, 2);
+                }
+            } catch (error) {
+                document.getElementById('output').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        testEvolution();
+    </script>
+</body>
+</html>
