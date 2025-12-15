@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex - Gotta Know 'Em All!</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Titillium Web', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .logo-text {
+            font-family: 'Black Ops One', cursive;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        
+        .pokemon-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .pokemon-card:hover {
+            transform: translateY(-12px) scale(1.05);
+        }
+        
+        .type-badge {
+            transition: all 0.3s ease;
+        }
+        
+        .type-badge:hover {
+            transform: scale(1.2);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        
+        .evolution-arrow {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.6s ease-out forwards;
+        }
+        
+        .effectiveness-cell {
+            transition: all 0.2s ease;
+        }
+        
+        .effectiveness-cell:hover {
+            transform: scale(1.3);
+            z-index: 10;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // SVG Icons
+        const Zap = ({ className, fill }) => (
+            <svg className={className} fill={fill || "none"} stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+        );
+
+        const ChevronRight = ({ className, strokeWidth }) => (
+            <svg className={className} fill="none" stroke="currentColor" strokeWidth={strokeWidth || 2} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+        );
+
+        const Search = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+
+        const Grid3x3 = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+            </svg>
+        );
+
+        const List = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        );
+
+        function PokemonExplorer() {
+            const [filteredPokemon, setFilteredPokemon] = useState([]);
+            const [selectedPokemon, setSelectedPokemon] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedType, setSelectedType] = useState('all');
+            const [viewMode, setViewMode] = useState('grid');
+            const [showTypeChart, setShowTypeChart] = useState(false);
+
+            const types = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
+            
+            const typeColors = {
+                normal: '#A8A878', fire: '#F08030', water: '#6890F0', electric: '#F8D030',
+                grass: '#78C850', ice: '#98D8D8', fighting: '#C03028', poison: '#A040A0',
+                ground: '#E0C068', flying: '#A890F0', psychic: '#F85888', bug: '#A8B820',
+                rock: '#B8A038', ghost: '#705898', dragon: '#7038F8', dark: '#705848',
+                steel: '#B8B8D0', fairy: '#EE99AC'
+            };
+
+            const typeEffectiveness = {
+                normal: { weakTo: ['fighting'], resistantTo: [], immuneTo: ['ghost'] },
+                fire: { weakTo: ['water', 'ground', 'rock'], resistantTo: ['fire', 'grass', 'ice', 'bug', 'steel', 'fairy'], immuneTo: [] },
+                water: { weakTo: ['electric', 'grass'], resistantTo: ['fire', 'water', 'ice', 'steel'], immuneTo: [] },
+                electric: { weakTo: ['ground'], resistantTo: ['electric', 'flying', 'steel'], immuneTo: [] },
+                grass: { weakTo: ['fire', 'ice', 'poison', 'flying', 'bug'], resistantTo: ['water', 'electric', 'grass', 'ground'], immuneTo: [] },
+                ice: { weakTo: ['fire', 'fighting', 'rock', 'steel'], resistantTo: ['ice'], immuneTo: [] },
+                fighting: { weakTo: ['flying', 'psychic', 'fairy'], resistantTo: ['bug', 'rock', 'dark'], immuneTo: [] },
+                poison: { weakTo: ['ground', 'psychic'], resistantTo: ['grass', 'fighting', 'poison', 'bug', 'fairy'], immuneTo: [] },
+                ground: { weakTo: ['water', 'grass', 'ice'], resistantTo: ['poison', 'rock'], immuneTo: ['electric'] },
+                flying: { weakTo: ['electric', 'ice', 'rock'], resistantTo: ['grass', 'fighting', 'bug'], immuneTo: ['ground'] },
+                psychic: { weakTo: ['bug', 'ghost', 'dark'], resistantTo: ['fighting', 'psychic'], immuneTo: [] },
+                bug: { weakTo: ['fire', 'flying', 'rock'], resistantTo: ['grass', 'fighting', 'ground'], immuneTo: [] },
+                rock: { weakTo: ['water', 'grass', 'fighting', 'ground', 'steel'], resistantTo: ['normal', 'fire', 'poison', 'flying'], immuneTo: [] },
+                ghost: { weakTo: ['ghost', 'dark'], resistantTo: ['poison', 'bug'], immuneTo: ['normal', 'fighting'] },
+                dragon: { weakTo: ['ice', 'dragon', 'fairy'], resistantTo: ['fire', 'water', 'electric', 'grass'], immuneTo: [] },
+                dark: { weakTo: ['fighting', 'bug', 'fairy'], resistantTo: ['ghost', 'dark'], immuneTo: ['psychic'] },
+                steel: { weakTo: ['fire', 'fighting', 'ground'], resistantTo: ['normal', 'grass', 'ice', 'flying', 'psychic', 'bug', 'rock', 'dragon', 'steel', 'fairy'], immuneTo: ['poison'] },
+                fairy: { weakTo: ['poison', 'steel'], resistantTo: ['fighting', 'bug', 'dark'], immuneTo: ['dragon'] }
+            };
+
+            const pokemonData = [
+                { id: 1, name: 'bulbasaur', types: ['grass', 'poison'], evolves: { level: 16, into: 2 } },
+                { id: 2, name: 'ivysaur', types: ['grass', 'poison'], evolves: { level: 32, into: 3 } },
+                { id: 3, name: 'venusaur', types: ['grass', 'poison'], evolves: null },
+                { id: 4, name: 'charmander', types: ['fire'], evolves: { level: 16, into: 5 } },
+                { id: 5, name: 'charmeleon', types: ['fire'], evolves: { level: 36, into: 6 } },
+                { id: 6, name: 'charizard', types: ['fire', 'flying'], evolves: null },
+                { id: 7, name: 'squirtle', types: ['water'], evolves: { level: 16, into: 8 } },
+                { id: 8, name: 'wartortle', types: ['water'], evolves: { level: 36, into: 9 } },
+                { id: 9, name: 'blastoise', types: ['water'], evolves: null },
+                { id: 10, name: 'caterpie', types: ['bug'], evolves: { level: 7, into: 11 } },
+                { id: 11, name: 'metapod', types: ['bug'], evolves: { level: 10, into: 12 } },
+                { id: 12, name: 'butterfree', types: ['bug', 'flying'], evolves: null },
+                { id: 13, name: 'weedle', types: ['bug', 'poison'], evolves: { level: 7, into: 14 } },
+                { id: 14, name: 'kakuna', types: ['bug', 'poison'], evolves: { level: 10, into: 15 } },
+                { id: 15, name: 'beedrill', types: ['bug', 'poison'], evolves: null },
+                { id: 16, name: 'pidgey', types: ['normal', 'flying'], evolves: { level: 18, into: 17 } },
+                { id: 17, name: 'pidgeotto', types: ['normal', 'flying'], evolves: { level: 36, into: 18 } },
+                { id: 18, name: 'pidgeot', types: ['normal', 'flying'], evolves: null },
+                { id: 19, name: 'rattata', types: ['normal'], evolves: { level: 20, into: 20 } },
+                { id: 20, name: 'raticate', types: ['normal'], evolves: null },
+                { id: 21, name: 'spearow', types: ['normal', 'flying'], evolves: { level: 20, into: 22 } },
+                { id: 22, name: 'fearow', types: ['normal', 'flying'], evolves: null },
+                { id: 23, name: 'ekans', types: ['poison'], evolves: { level: 22, into: 24 } },
+                { id: 24, name: 'arbok', types: ['poison'], evolves: null },
+                { id: 25, name: 'pikachu', types: ['electric'], evolves: { method: 'Thunder Stone', into: 26 } },
+                { id: 26, name: 'raichu', types: ['electric'], evolves: null },
+                { id: 27, name: 'sandshrew', types: ['ground'], evolves: { level: 22, into: 28 } },
+                { id: 28, name: 'sandslash', types: ['ground'], evolves: null },
+                { id: 29, name: 'nidoran-f', types: ['poison'], evolves: { level: 16, into: 30 } },
+                { id: 30, name: 'nidorina', types: ['poison'], evolves: { method: 'Moon Stone', into: 31 } },
+                { id: 31, name: 'nidoqueen', types: ['poison', 'ground'], evolves: null },
+                { id: 32, name: 'nidoran-m', types: ['poison'], evolves: { level: 16, into: 33 } },
+                { id: 33, name: 'nidorino', types: ['poison'], evolves: { method: 'Moon Stone', into: 34 } },
+                { id: 34, name: 'nidoking', types: ['poison', 'ground'], evolves: null },
+                { id: 35, name: 'clefairy', types: ['fairy'], evolves: { method: 'Moon Stone', into: 36 } },
+                { id: 36, name: 'clefable', types: ['fairy'], evolves: null },
+                { id: 37, name: 'vulpix', types: ['fire'], evolves: { method: 'Fire Stone', into: 38 } },
+                { id: 38, name: 'ninetales', types: ['fire'], evolves: null },
+                { id: 39, name: 'jigglypuff', types: ['normal', 'fairy'], evolves: { method: 'Moon Stone', into: 40 } },
+                { id: 40, name: 'wigglytuff', types: ['normal', 'fairy'], evolves: null },
+                { id: 41, name: 'zubat', types: ['poison', 'flying'], evolves: { level: 22, into: 42 } },
+                { id: 42, name: 'golbat', types: ['poison', 'flying'], evolves: { method: 'Friendship', into: 169 } },
+                { id: 43, name: 'oddish', types: ['grass', 'poison'], evolves: { level: 21, into: 44 } },
+                { id: 44, name: 'gloom', types: ['grass', 'poison'], evolves: { method: 'Leaf Stone', into: 45 } },
+                { id: 45, name: 'vileplume', types: ['grass', 'poison'], evolves: null },
+                { id: 46, name: 'paras', types: ['bug', 'grass'], evolves: { level: 24, into: 47 } },
+                { id: 47, name: 'parasect', types: ['bug', 'grass'], evolves: null },
+                { id: 48, name: 'venonat', types: ['bug', 'poison'], evolves: { level: 31, into: 49 } },
+                { id: 49, name: 'venomoth', types: ['bug', 'poison'], evolves: null },
+                { id: 50, name: 'diglett', types: ['ground'], evolves: { level: 26, into: 51 } },
+                { id: 51, name: 'dugtrio', types: ['ground'], evolves: null },
+                { id: 52, name: 'meowth', types: ['normal'], evolves: { level: 28, into: 53 } },
+                { id: 53, name: 'persian', types: ['normal'], evolves: null },
+                { id: 54, name: 'psyduck', types: ['water'], evolves: { level: 33, into: 55 } },
+                { id: 55, name: 'golduck', types: ['water'], evolves: null },
+                { id: 56, name: 'mankey', types: ['fighting'], evolves: { level: 28, into: 57 } },
+                { id: 57, name: 'primeape', types: ['fighting'], evolves: null },
+                { id: 58, name: 'growlithe', types: ['fire'], evolves: { method: 'Fire Stone', into: 59 } },
+                { id: 59, name: 'arcanine', types: ['fire'], evolves: null },
+                { id: 60, name: 'poliwag', types: ['water'], evolves: { level: 25, into: 61 } },
+                { id: 61, name: 'poliwhirl', types: ['water'], evolves: { method: 'Water Stone', into: 62 } },
+                { id: 62, name: 'poliwrath', types: ['water', 'fighting'], evolves: null },
+                { id: 63, name: 'abra', types: ['psychic'], evolves: { level: 16, into: 64 } },
+                { id: 64, name: 'kadabra', types: ['psychic'], evolves: { method: 'Trade', into: 65 } },
+                { id: 65, name: 'alakazam', types: ['psychic'], evolves: null },
+                { id: 66, name: 'machop', types: ['fighting'], evolves: { level: 28, into: 67 } },
+                { id: 67, name: 'machoke', types: ['fighting'], evolves: { method: 'Trade', into: 68 } },
+                { id: 68, name: 'machamp', types: ['fighting'], evolves: null },
+                { id: 69, name: 'bellsprout', types: ['grass', 'poison'], evolves: { level: 21, into: 70 } },
+                { id: 70, name: 'weepinbell', types: ['grass', 'poison'], evolves: { method: 'Leaf Stone', into: 71 } },
+                { id: 71, name: 'victreebel', types: ['grass', 'poison'], evolves: null },
+                { id: 72, name: 'tentacool', types: ['water', 'poison'], evolves: { level: 30, into: 73 } },
+                { id: 73, name: 'tentacruel', types: ['water', 'poison'], evolves: null },
+                { id: 74, name: 'geodude', types: ['rock', 'ground'], evolves: { level: 25, into: 75 } },
+                { id: 75, name: 'graveler', types: ['rock', 'ground'], evolves: { method: 'Trade', into: 76 } },
+                { id: 76, name: 'golem', types: ['rock', 'ground'], evolves: null },
+                { id: 77, name: 'ponyta', types: ['fire'], evolves: { level: 40, into: 78 } },
+                { id: 78, name: 'rapidash', types: ['fire'], evolves: null },
+                { id: 79, name: 'slowpoke', types: ['water', 'psychic'], evolves: { level: 37, into: 80 } },
+                { id: 80, name: 'slowbro', types: ['water', 'psychic'], evolves: null },
+                { id: 81, name: 'magnemite', types: ['electric', 'steel'], evolves: { level: 30, into: 82 } },
+                { id: 82, name: 'magneton', types: ['electric', 'steel'], evolves: null },
+                { id: 83, name: 'farfetchd', types: ['normal', 'flying'], evolves: null },
+                { id: 84, name: 'doduo', types: ['normal', 'flying'], evolves: { level: 31, into: 85 } },
+                { id: 85, name: 'dodrio', types: ['normal', 'flying'], evolves: null },
+                { id: 86, name: 'seel', types: ['water'], evolves: { level: 34, into: 87 } },
+                { id: 87, name: 'dewgong', types: ['water', 'ice'], evolves: null },
+                { id: 88, name: 'grimer', types: ['poison'], evolves: { level: 38, into: 89 } },
+                { id: 89, name: 'muk', types: ['poison'], evolves: null },
+                { id: 90, name: 'shellder', types: ['water'], evolves: { method: 'Water Stone', into: 91 } },
+                { id: 91, name: 'cloyster', types: ['water', 'ice'], evolves: null },
+                { id: 92, name: 'gastly', types: ['ghost', 'poison'], evolves: { level: 25, into: 93 } },
+                { id: 93, name: 'haunter', types: ['ghost', 'poison'], evolves: { method: 'Trade', into: 94 } },
+                { id: 94, name: 'gengar', types: ['ghost', 'poison'], evolves: null },
+                { id: 95, name: 'onix', types: ['rock', 'ground'], evolves: { method: 'Trade holding Metal Coat', into: 208 } },
+                { id: 96, name: 'drowzee', types: ['psychic'], evolves: { level: 26, into: 97 } },
+                { id: 97, name: 'hypno', types: ['psychic'], evolves: null },
+                { id: 98, name: 'krabby', types: ['water'], evolves: { level: 28, into: 99 } },
+                { id: 99, name: 'kingler', types: ['water'], evolves: null },
+                { id: 100, name: 'voltorb', types: ['electric'], evolves: { level: 30, into: 101 } },
+                { id: 101, name: 'electrode', types: ['electric'], evolves: null },
+                { id: 102, name: 'exeggcute', types: ['grass', 'psychic'], evolves: { method: 'Leaf Stone', into: 103 } },
+                { id: 103, name: 'exeggutor', types: ['grass', 'psychic'], evolves: null },
+                { id: 104, name: 'cubone', types: ['ground'], evolves: { level: 28, into: 105 } },
+                { id: 105, name: 'marowak', types: ['ground'], evolves: null },
+                { id: 106, name: 'hitmonlee', types: ['fighting'], evolves: null },
+                { id: 107, name: 'hitmonchan', types: ['fighting'], evolves: null },
+                { id: 108, name: 'lickitung', types: ['normal'], evolves: { method: 'Learn Rollout', into: 463 } },
+                { id: 109, name: 'koffing', types: ['poison'], evolves: { level: 35, into: 110 } },
+                { id: 110, name: 'weezing', types: ['poison'], evolves: null },
+                { id: 111, name: 'rhyhorn', types: ['ground', 'rock'], evolves: { level: 42, into: 112 } },
+                { id: 112, name: 'rhydon', types: ['ground', 'rock'], evolves: { method: 'Trade holding Protector', into: 464 } },
+                { id: 113, name: 'chansey', types: ['normal'], evolves: { method: 'Friendship', into: 242 } },
+                { id: 114, name: 'tangela', types: ['grass'], evolves: { method: 'Learn Ancient Power', into: 465 } },
+                { id: 115, name: 'kangaskhan', types: ['normal'], evolves: null },
+                { id: 116, name: 'horsea', types: ['water'], evolves: { level: 32, into: 117 } },
+                { id: 117, name: 'seadra', types: ['water'], evolves: { method: 'Trade holding Dragon Scale', into: 230 } },
+                { id: 118, name: 'goldeen', types: ['water'], evolves: { level: 33, into: 119 } },
+                { id: 119, name: 'seaking', types: ['water'], evolves: null },
+                { id: 120, name: 'staryu', types: ['water'], evolves: { method: 'Water Stone', into: 121 } },
+                { id: 121, name: 'starmie', types: ['water', 'psychic'], evolves: null },
+                { id: 122, name: 'mr-mime', types: ['psychic', 'fairy'], evolves: null },
+                { id: 123, name: 'scyther', types: ['bug', 'flying'], evolves: { method: 'Trade holding Metal Coat', into: 212 } },
+                { id: 124, name: 'jynx', types: ['ice', 'psychic'], evolves: null },
+                { id: 125, name: 'electabuzz', types: ['electric'], evolves: { method: 'Trade holding Electirizer', into: 466 } },
+                { id: 126, name: 'magmar', types: ['fire'], evolves: { method: 'Trade holding Magmarizer', into: 467 } },
+                { id: 127, name: 'pinsir', types: ['bug'], evolves: null },
+                { id: 128, name: 'tauros', types: ['normal'], evolves: null },
+                { id: 129, name: 'magikarp', types: ['water'], evolves: { level: 20, into: 130 } },
+                { id: 130, name: 'gyarados', types: ['water', 'flying'], evolves: null },
+                { id: 131, name: 'lapras', types: ['water', 'ice'], evolves: null },
+                { id: 132, name: 'ditto', types: ['normal'], evolves: null },
+                { id: 133, name: 'eevee', types: ['normal'], evolves: { method: 'Multiple (see evolutions)', into: 134 } },
+                { id: 134, name: 'vaporeon', types: ['water'], evolves: null },
+                { id: 135, name: 'jolteon', types: ['electric'], evolves: null },
+                { id: 136, name: 'flareon', types: ['fire'], evolves: null },
+                { id: 137, name: 'porygon', types: ['normal'], evolves: { method: 'Trade holding Up-Grade', into: 233 } },
+                { id: 138, name: 'omanyte', types: ['rock', 'water'], evolves: { level: 40, into: 139 } },
+                { id: 139, name: 'omastar', types: ['rock', 'water'], evolves: null },
+                { id: 140, name: 'kabuto', types: ['rock', 'water'], evolves: { level: 40, into: 141 } },
+                { id: 141, name: 'kabutops', types: ['rock', 'water'], evolves: null },
+                { id: 142, name: 'aerodactyl', types: ['rock', 'flying'], evolves: null },
+                { id: 143, name: 'snorlax', types: ['normal'], evolves: null },
+                { id: 144, name: 'articuno', types: ['ice', 'flying'], evolves: null },
+                { id: 145, name: 'zapdos', types: ['electric', 'flying'], evolves: null },
+                { id: 146, name: 'moltres', types: ['fire', 'flying'], evolves: null },
+                { id: 147, name: 'dratini', types: ['dragon'], evolves: { level: 30, into: 148 } },
+                { id: 148, name: 'dragonair', types: ['dragon'], evolves: { level: 55, into: 149 } },
+                { id: 149, name: 'dragonite', types: ['dragon', 'flying'], evolves: null },
+                { id: 150, name: 'mewtwo', types: ['psychic'], evolves: null },
+                { id: 151, name: 'mew', types: ['psychic'], evolves: null }
+            ];
+
+            const specialEvolutions = {
+                133: [
+                    { id: 133, name: 'eevee', method: 'Base form' },
+                    { id: 134, name: 'vaporeon', method: 'Water Stone' },
+                    { id: 135, name: 'jolteon', method: 'Thunder Stone' },
+                    { id: 136, name: 'flareon', method: 'Fire Stone' }
+                ]
+            };
+
+            useEffect(() => {
+                setFilteredPokemon(pokemonData);
+            }, []);
+
+            useEffect(() => {
+                filterPokemon();
+            }, [searchTerm, selectedType]);
+
+            const filterPokemon = () => {
+                let filtered = pokemonData;
+                
+                if (searchTerm) {
+                    filtered = filtered.filter(p => 
+                        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        p.id.toString().includes(searchTerm)
+                    );
+                }
+                
+                if (selectedType !== 'all') {
+                    filtered = filtered.filter(p => p.types.includes(selectedType));
+                }
+                
+                setFilteredPokemon(filtered);
+            };
+
+            const getEvolutionChain = (pokemon) => {
+                if (specialEvolutions[pokemon.id]) {
+                    return specialEvolutions[pokemon.id];
+                }
+
+                const chain = [];
+                let current = pokemon;
+                
+                while (true) {
+                    const prevForm = pokemonData.find(p => p.evolves?.into === current.id);
+                    if (!prevForm) break;
+                    current = prevForm;
+                }
+                
+                chain.push({ id: current.id, name: current.name, method: 'Base form', evolves: current.evolves });
+                
+                while (current.evolves?.into) {
+                    const next = pokemonData.find(p => p.id === current.evolves.into);
+                    if (!next) break;
+                    
+                    const method = current.evolves.level 
+                        ? `Level ${current.evolves.level}`
+                        : current.evolves.method || 'Unknown';
+                    
+                    chain.push({ id: next.id, name: next.name, method, evolves: next.evolves });
+                    current = next;
+                }
+                
+                return chain;
+            };
+
+            const handlePokemonClick = (p) => {
+                setSelectedPokemon(p);
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-rose-400 via-fuchsia-500 to-indigo-500 pb-20">
+                    <header className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 shadow-2xl sticky top-0 z-50 border-b-8 border-black">
+                        <div className="container mx-auto px-4 py-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-white rounded-full p-3 shadow-xl border-4 border-black">
+                                        <Zap className="w-12 h-12 text-yellow-500" fill="currentColor" />
+                                    </div>
+                                    <div>
+                                        <h1 className="logo-text text-5xl text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)]">
+                                            POKÉDEX
+                                        </h1>
+                                        <p className="text-white text-lg font-bold tracking-wide drop-shadow-md">
+                                            Gotta Know 'Em All!
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowTypeChart(!showTypeChart)}
+                                        className="bg-white text-black font-black px-6 py-3 rounded-xl shadow-xl hover:bg-yellow-300 transform hover:scale-110 transition-all border-4 border-black"
+                                    >
+                                        {showTypeChart ? 'POKÉMON' : 'TYPE CHART'}
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                                        className="bg-white p-3 rounded-xl shadow-xl hover:bg-yellow-300 transform hover:scale-110 transition-all border-4 border-black"
+                                    >
+                                        {viewMode === 'grid' ? <List className="w-6 h-6" /> : <Grid3x3 className="w-6 h-6" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <div className="flex-1 relative">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-6 h-6" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search Pokémon..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-14 pr-4 py-4 rounded-xl border-4 border-black font-bold text-lg shadow-xl focus:outline-none focus:ring-4 focus:ring-yellow-400"
+                                    />
+                                </div>
+                                <select
+                                    value={selectedType}
+                                    onChange={(e) => setSelectedType(e.target.value)}
+                                    className="px-6 py-4 rounded-xl border-4 border-black font-bold text-lg shadow-xl focus:outline-none focus:ring-4 focus:ring-yellow-400 bg-white"
+                                >
+                                    <option value="all">All Types</option>
+                                    {types.map(type => (
+                                        <option key={type} value={type}>
+                                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="container mx-auto px-4 py-8">
+                        {showTypeChart ? (
+                            <TypeEffectivenessChart types={types} typeColors={typeColors} typeEffectiveness={typeEffectiveness} />
+                        ) : (
+                            <>
+                                {selectedPokemon ? (
+                                    <PokemonDetail 
+                                        pokemon={selectedPokemon} 
+                                        evolutionChain={getEvolutionChain(selectedPokemon)}
+                                        typeColors={typeColors}
+                                        onClose={() => setSelectedPokemon(null)}
+                                    />
+                                ) : (
+                                    <div>
+                                        <div className="mb-6 bg-white/20 backdrop-blur-sm rounded-2xl p-4 border-4 border-white/50">
+                                            <p className="text-white text-xl font-black text-center">
+                                                {filteredPokemon.length} POKÉMON FOUND
+                                            </p>
+                                        </div>
+                                        
+                                        {viewMode === 'grid' ? (
+                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                                {filteredPokemon.map((p, index) => (
+                                                    <div
+                                                        key={p.id}
+                                                        onClick={() => handlePokemonClick(p)}
+                                                        className={`pokemon-card bg-white rounded-2xl p-6 cursor-pointer shadow-2xl border-4 border-black hover:border-yellow-400 slide-in stagger-${index % 3 + 1}`}
+                                                    >
+                                                        <div className="text-center">
+                                                            <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-4 mb-4 border-2 border-black">
+                                                                <img 
+                                                                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
+                                                                    alt={p.name} 
+                                                                    className="w-full h-32 object-contain" 
+                                                                />
+                                                            </div>
+                                                            <span className="text-gray-500 font-black text-sm">#{p.id.toString().padStart(3, '0')}</span>
+                                                            <h3 className="font-black text-xl capitalize mb-3 text-gray-800">
+                                                                {p.name.replace('-', ' ')}
+                                                            </h3>
+                                                            <div className="flex justify-center gap-2 flex-wrap">
+                                                                {p.types.map(type => (
+                                                                    <span
+                                                                        key={type}
+                                                                        className="type-badge px-3 py-1 rounded-full text-white font-bold text-sm uppercase shadow-lg border-2 border-black"
+                                                                        style={{ backgroundColor: typeColors[type] }}
+                                                                    >
+                                                                        {type}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {filteredPokemon.map((p, index) => (
+                                                    <div
+                                                        key={p.id}
+                                                        onClick={() => handlePokemonClick(p)}
+                                                        className={`pokemon-card bg-white rounded-2xl p-6 cursor-pointer shadow-2xl border-4 border-black hover:border-yellow-400 flex items-center gap-6 slide-in stagger-${index % 3 + 1}`}
+                                                    >
+                                                        <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-4 border-2 border-black flex-shrink-0">
+                                                            <img 
+                                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
+                                                                alt={p.name} 
+                                                                className="w-24 h-24 object-contain" 
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-4 mb-2">
+                                                                <span className="text-gray-500 font-black text-lg">#{p.id.toString().padStart(3, '0')}</span>
+                                                                <h3 className="font-black text-2xl capitalize text-gray-800">{p.name.replace('-', ' ')}</h3>
+                                                            </div>
+                                                            <div className="flex gap-2 flex-wrap">
+                                                                {p.types.map(type => (
+                                                                    <span
+                                                                        key={type}
+                                                                        className="type-badge px-4 py-2 rounded-full text-white font-bold uppercase shadow-lg border-2 border-black"
+                                                                        style={{ backgroundColor: typeColors[type] }}
+                                                                    >
+                                                                        {type}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function PokemonDetail({ pokemon, evolutionChain, typeColors, onClose }) {
+            const generateStats = (id) => {
+                const seed = id * 7;
+                return [
+                    { stat: { name: 'HP' }, base_stat: 40 + (seed % 70) },
+                    { stat: { name: 'Attack' }, base_stat: 45 + ((seed * 3) % 75) },
+                    { stat: { name: 'Defense' }, base_stat: 40 + ((seed * 5) % 80) },
+                    { stat: { name: 'Sp. Attack' }, base_stat: 50 + ((seed * 7) % 70) },
+                    { stat: { name: 'Sp. Defense' }, base_stat: 45 + ((seed * 11) % 75) },
+                    { stat: { name: 'Speed' }, base_stat: 40 + ((seed * 13) % 90) }
+                ];
+            };
+
+            const stats = generateStats(pokemon.id);
+
+            return (
+                <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-black max-w-6xl mx-auto slide-in">
+                    <button
+                        onClick={onClose}
+                        className="mb-6 bg-red-500 text-white font-black px-6 py-3 rounded-xl shadow-xl hover:bg-red-600 transform hover:scale-110 transition-all border-4 border-black"
+                    >
+                        ← BACK
+                    </button>
+
+                    <div className="grid md:grid-cols-2 gap-8 mb-8">
+                        <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl p-8 border-4 border-black">
+                            <img 
+                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
+                                alt={pokemon.name} 
+                                className="w-full max-w-sm mx-auto" 
+                            />
+                        </div>
+
+                        <div>
+                            <div className="flex items-center gap-4 mb-4">
+                                <span className="text-gray-500 font-black text-3xl">#{pokemon.id.toString().padStart(3, '0')}</span>
+                                <h2 className="font-black text-5xl capitalize text-gray-800">{pokemon.name.replace('-', ' ')}</h2>
+                            </div>
+
+                            <div className="flex gap-3 mb-6 flex-wrap">
+                                {pokemon.types.map(type => (
+                                    <span
+                                        key={type}
+                                        className="px-6 py-3 rounded-full text-white font-black text-xl uppercase shadow-lg border-4 border-black"
+                                        style={{ backgroundColor: typeColors[type] }}
+                                    >
+                                        {type}
+                                    </span>
+                                ))}
+                            </div>
+
+                            <div className="bg-gray-100 rounded-2xl p-6 border-4 border-black">
+                                <h3 className="font-black text-2xl mb-4 text-gray-800">BASE STATS</h3>
+                                <div className="space-y-3">
+                                    {stats.map(stat => (
+                                        <div key={stat.stat.name}>
+                                            <div className="flex justify-between mb-1">
+                                                <span className="font-bold uppercase text-sm">
+                                                    {stat.stat.name}
+                                                </span>
+                                                <span className="font-black">{stat.base_stat}</span>
+                                            </div>
+                                            <div className="bg-gray-300 rounded-full h-3 border-2 border-black overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full transition-all duration-1000"
+                                                    style={{
+                                                        width: `${(stat.base_stat / 255) * 100}%`,
+                                                        backgroundColor: stat.base_stat > 100 ? '#10b981' : stat.base_stat > 50 ? '#fbbf24' : '#ef4444'
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {evolutionChain && evolutionChain.length > 1 && (
+                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black">
+                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
+                            <div className="flex items-center justify-center flex-wrap gap-4">
+                                {evolutionChain.map((evo, index) => (
+                                    <React.Fragment key={evo.id}>
+                                        <div className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px]">
+                                            <img 
+                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`}
+                                                alt={evo.name} 
+                                                className="w-32 h-32 object-contain mb-2" 
+                                            />
+                                            <span className="text-gray-500 font-black text-sm">#{evo.id.toString().padStart(3, '0')}</span>
+                                            <span className="font-black text-xl capitalize text-gray-800">{evo.name.replace('-', ' ')}</span>
+                                        </div>
+                                        {index < evolutionChain.length - 1 && (
+                                            <div className="flex flex-col items-center">
+                                                <ChevronRight className="w-12 h-12 text-purple-600 evolution-arrow" strokeWidth={4} />
+                                                <span className="mt-2 px-4 py-2 bg-yellow-400 rounded-full font-black text-sm border-3 border-black shadow-lg">
+                                                    {evo.evolves?.level ? `Level ${evo.evolves.level}` : evo.evolves?.method || evolutionChain[index + 1].method}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function TypeEffectivenessChart({ types, typeColors, typeEffectiveness }) {
+            return (
+                <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-black slide-in">
+                    <h2 className="font-black text-4xl mb-8 text-center text-gray-800">TYPE EFFECTIVENESS CHART</h2>
+                    
+                    <div className="mb-8 grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-green-500 rounded-lg border-2 border-black"></div>
+                            <span className="font-bold">Super Effective (2x)</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-red-500 rounded-lg border-2 border-black"></div>
+                            <span className="font-bold">Not Very Effective (0.5x)</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-800 rounded-lg border-2 border-black"></div>
+                            <span className="font-bold">No Effect (0x)</span>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto scrollbar-hide">
+                        <div className="inline-block min-w-full">
+                            <div className="grid gap-2" style={{ gridTemplateColumns: `120px repeat(${types.length}, 60px)` }}>
+                                <div className="font-black text-center py-2"></div>
+                                {types.map(type => (
+                                    <div
+                                        key={type}
+                                        className="font-bold text-white text-center py-2 rounded-lg border-2 border-black shadow-lg uppercase text-xs transform -rotate-45 origin-center"
+                                        style={{ backgroundColor: typeColors[type], height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                        <span className="block">{type}</span>
+                                    </div>
+                                ))}
+
+                                {types.map(defendingType => (
+                                    <React.Fragment key={defendingType}>
+                                        <div
+                                            className="font-bold text-white py-3 px-4 rounded-lg border-2 border-black shadow-lg uppercase flex items-center"
+                                            style={{ backgroundColor: typeColors[defendingType] }}
+                                        >
+                                            {defendingType}
+                                        </div>
+                                        {types.map(attackingType => {
+                                            const effectiveness = typeEffectiveness[defendingType];
+                                            let color = 'bg-gray-200';
+                                            let text = '1×';
+                                            
+                                            if (effectiveness.immuneTo.includes(attackingType)) {
+                                                color = 'bg-gray-800';
+                                                text = '0×';
+                                            } else if (effectiveness.weakTo.includes(attackingType)) {
+                                                color = 'bg-green-500';
+                                                text = '2×';
+                                            } else if (effectiveness.resistantTo.includes(attackingType)) {
+                                                color = 'bg-red-500';
+                                                text = '½×';
+                                            }
+                                            
+                                            return (
+                                                <div
+                                                    key={attackingType}
+                                                    className={`effectiveness-cell ${color} rounded-lg border-2 border-black font-black text-white flex items-center justify-center h-16 shadow-md relative`}
+                                                    title={`${attackingType} → ${defendingType}: ${text}`}
+                                                >
+                                                    {text}
+                                                </div>
+                                            );
+                                        })}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 bg-yellow-100 border-4 border-yellow-500 rounded-2xl p-6">
+                        <h3 className="font-black text-xl mb-3">HOW TO READ THIS CHART:</h3>
+                        <ul className="space-y-2 font-bold">
+                            <li>• <strong>Rows</strong> show the defending Pokémon's type</li>
+                            <li>• <strong>Columns</strong> show the attacking move's type</li>
+                            <li>• Find the intersection to see damage multiplier</li>
+                            <li>• <strong>Green (2x)</strong>: Attacking type is super effective against defending type</li>
+                            <li>• <strong>Red (½x)</strong>: Attacking type is not very effective</li>
+                            <li>• <strong>Black (0x)</strong>: Attacking type has no effect</li>
+                        </ul>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<PokemonExplorer />, document.getElementById('root'));
+    </script>
+</body>
+</html>
