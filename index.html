@@ -129,12 +129,15 @@
         );
 
         function PokemonExplorer() {
+            const [pokemonData, setPokemonData] = useState([]);
             const [filteredPokemon, setFilteredPokemon] = useState([]);
             const [selectedPokemon, setSelectedPokemon] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
             const [selectedType, setSelectedType] = useState('all');
             const [viewMode, setViewMode] = useState('grid');
             const [showTypeChart, setShowTypeChart] = useState(false);
+            const [loading, setLoading] = useState(true);
+            const [loadingProgress, setLoadingProgress] = useState(0);
 
             const types = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
             
@@ -167,179 +170,78 @@
                 fairy: { weakTo: ['poison', 'steel'], resistantTo: ['fighting', 'bug', 'dark'], immuneTo: ['dragon'] }
             };
 
-            const pokemonData = [
-                { id: 1, name: 'bulbasaur', types: ['grass', 'poison'], evolves: { level: 16, into: 2 } },
-                { id: 2, name: 'ivysaur', types: ['grass', 'poison'], evolves: { level: 32, into: 3 } },
-                { id: 3, name: 'venusaur', types: ['grass', 'poison'], evolves: null },
-                { id: 4, name: 'charmander', types: ['fire'], evolves: { level: 16, into: 5 } },
-                { id: 5, name: 'charmeleon', types: ['fire'], evolves: { level: 36, into: 6 } },
-                { id: 6, name: 'charizard', types: ['fire', 'flying'], evolves: null },
-                { id: 7, name: 'squirtle', types: ['water'], evolves: { level: 16, into: 8 } },
-                { id: 8, name: 'wartortle', types: ['water'], evolves: { level: 36, into: 9 } },
-                { id: 9, name: 'blastoise', types: ['water'], evolves: null },
-                { id: 10, name: 'caterpie', types: ['bug'], evolves: { level: 7, into: 11 } },
-                { id: 11, name: 'metapod', types: ['bug'], evolves: { level: 10, into: 12 } },
-                { id: 12, name: 'butterfree', types: ['bug', 'flying'], evolves: null },
-                { id: 13, name: 'weedle', types: ['bug', 'poison'], evolves: { level: 7, into: 14 } },
-                { id: 14, name: 'kakuna', types: ['bug', 'poison'], evolves: { level: 10, into: 15 } },
-                { id: 15, name: 'beedrill', types: ['bug', 'poison'], evolves: null },
-                { id: 16, name: 'pidgey', types: ['normal', 'flying'], evolves: { level: 18, into: 17 } },
-                { id: 17, name: 'pidgeotto', types: ['normal', 'flying'], evolves: { level: 36, into: 18 } },
-                { id: 18, name: 'pidgeot', types: ['normal', 'flying'], evolves: null },
-                { id: 19, name: 'rattata', types: ['normal'], evolves: { level: 20, into: 20 } },
-                { id: 20, name: 'raticate', types: ['normal'], evolves: null },
-                { id: 21, name: 'spearow', types: ['normal', 'flying'], evolves: { level: 20, into: 22 } },
-                { id: 22, name: 'fearow', types: ['normal', 'flying'], evolves: null },
-                { id: 23, name: 'ekans', types: ['poison'], evolves: { level: 22, into: 24 } },
-                { id: 24, name: 'arbok', types: ['poison'], evolves: null },
-                { id: 25, name: 'pikachu', types: ['electric'], evolves: { method: 'Thunder Stone', into: 26 } },
-                { id: 26, name: 'raichu', types: ['electric'], evolves: null },
-                { id: 27, name: 'sandshrew', types: ['ground'], evolves: { level: 22, into: 28 } },
-                { id: 28, name: 'sandslash', types: ['ground'], evolves: null },
-                { id: 29, name: 'nidoran-f', types: ['poison'], evolves: { level: 16, into: 30 } },
-                { id: 30, name: 'nidorina', types: ['poison'], evolves: { method: 'Moon Stone', into: 31 } },
-                { id: 31, name: 'nidoqueen', types: ['poison', 'ground'], evolves: null },
-                { id: 32, name: 'nidoran-m', types: ['poison'], evolves: { level: 16, into: 33 } },
-                { id: 33, name: 'nidorino', types: ['poison'], evolves: { method: 'Moon Stone', into: 34 } },
-                { id: 34, name: 'nidoking', types: ['poison', 'ground'], evolves: null },
-                { id: 35, name: 'clefairy', types: ['fairy'], evolves: { method: 'Moon Stone', into: 36 } },
-                { id: 36, name: 'clefable', types: ['fairy'], evolves: null },
-                { id: 37, name: 'vulpix', types: ['fire'], evolves: { method: 'Fire Stone', into: 38 } },
-                { id: 38, name: 'ninetales', types: ['fire'], evolves: null },
-                { id: 39, name: 'jigglypuff', types: ['normal', 'fairy'], evolves: { method: 'Moon Stone', into: 40 } },
-                { id: 40, name: 'wigglytuff', types: ['normal', 'fairy'], evolves: null },
-                { id: 41, name: 'zubat', types: ['poison', 'flying'], evolves: { level: 22, into: 42 } },
-                { id: 42, name: 'golbat', types: ['poison', 'flying'], evolves: { method: 'Friendship', into: 169 } },
-                { id: 43, name: 'oddish', types: ['grass', 'poison'], evolves: { level: 21, into: 44 } },
-                { id: 44, name: 'gloom', types: ['grass', 'poison'], evolves: { method: 'Leaf Stone', into: 45 } },
-                { id: 45, name: 'vileplume', types: ['grass', 'poison'], evolves: null },
-                { id: 46, name: 'paras', types: ['bug', 'grass'], evolves: { level: 24, into: 47 } },
-                { id: 47, name: 'parasect', types: ['bug', 'grass'], evolves: null },
-                { id: 48, name: 'venonat', types: ['bug', 'poison'], evolves: { level: 31, into: 49 } },
-                { id: 49, name: 'venomoth', types: ['bug', 'poison'], evolves: null },
-                { id: 50, name: 'diglett', types: ['ground'], evolves: { level: 26, into: 51 } },
-                { id: 51, name: 'dugtrio', types: ['ground'], evolves: null },
-                { id: 52, name: 'meowth', types: ['normal'], evolves: { level: 28, into: 53 } },
-                { id: 53, name: 'persian', types: ['normal'], evolves: null },
-                { id: 54, name: 'psyduck', types: ['water'], evolves: { level: 33, into: 55 } },
-                { id: 55, name: 'golduck', types: ['water'], evolves: null },
-                { id: 56, name: 'mankey', types: ['fighting'], evolves: { level: 28, into: 57 } },
-                { id: 57, name: 'primeape', types: ['fighting'], evolves: null },
-                { id: 58, name: 'growlithe', types: ['fire'], evolves: { method: 'Fire Stone', into: 59 } },
-                { id: 59, name: 'arcanine', types: ['fire'], evolves: null },
-                { id: 60, name: 'poliwag', types: ['water'], evolves: { level: 25, into: 61 } },
-                { id: 61, name: 'poliwhirl', types: ['water'], evolves: { method: 'Water Stone', into: 62 } },
-                { id: 62, name: 'poliwrath', types: ['water', 'fighting'], evolves: null },
-                { id: 63, name: 'abra', types: ['psychic'], evolves: { level: 16, into: 64 } },
-                { id: 64, name: 'kadabra', types: ['psychic'], evolves: { method: 'Trade', into: 65 } },
-                { id: 65, name: 'alakazam', types: ['psychic'], evolves: null },
-                { id: 66, name: 'machop', types: ['fighting'], evolves: { level: 28, into: 67 } },
-                { id: 67, name: 'machoke', types: ['fighting'], evolves: { method: 'Trade', into: 68 } },
-                { id: 68, name: 'machamp', types: ['fighting'], evolves: null },
-                { id: 69, name: 'bellsprout', types: ['grass', 'poison'], evolves: { level: 21, into: 70 } },
-                { id: 70, name: 'weepinbell', types: ['grass', 'poison'], evolves: { method: 'Leaf Stone', into: 71 } },
-                { id: 71, name: 'victreebel', types: ['grass', 'poison'], evolves: null },
-                { id: 72, name: 'tentacool', types: ['water', 'poison'], evolves: { level: 30, into: 73 } },
-                { id: 73, name: 'tentacruel', types: ['water', 'poison'], evolves: null },
-                { id: 74, name: 'geodude', types: ['rock', 'ground'], evolves: { level: 25, into: 75 } },
-                { id: 75, name: 'graveler', types: ['rock', 'ground'], evolves: { method: 'Trade', into: 76 } },
-                { id: 76, name: 'golem', types: ['rock', 'ground'], evolves: null },
-                { id: 77, name: 'ponyta', types: ['fire'], evolves: { level: 40, into: 78 } },
-                { id: 78, name: 'rapidash', types: ['fire'], evolves: null },
-                { id: 79, name: 'slowpoke', types: ['water', 'psychic'], evolves: { level: 37, into: 80 } },
-                { id: 80, name: 'slowbro', types: ['water', 'psychic'], evolves: null },
-                { id: 81, name: 'magnemite', types: ['electric', 'steel'], evolves: { level: 30, into: 82 } },
-                { id: 82, name: 'magneton', types: ['electric', 'steel'], evolves: null },
-                { id: 83, name: 'farfetchd', types: ['normal', 'flying'], evolves: null },
-                { id: 84, name: 'doduo', types: ['normal', 'flying'], evolves: { level: 31, into: 85 } },
-                { id: 85, name: 'dodrio', types: ['normal', 'flying'], evolves: null },
-                { id: 86, name: 'seel', types: ['water'], evolves: { level: 34, into: 87 } },
-                { id: 87, name: 'dewgong', types: ['water', 'ice'], evolves: null },
-                { id: 88, name: 'grimer', types: ['poison'], evolves: { level: 38, into: 89 } },
-                { id: 89, name: 'muk', types: ['poison'], evolves: null },
-                { id: 90, name: 'shellder', types: ['water'], evolves: { method: 'Water Stone', into: 91 } },
-                { id: 91, name: 'cloyster', types: ['water', 'ice'], evolves: null },
-                { id: 92, name: 'gastly', types: ['ghost', 'poison'], evolves: { level: 25, into: 93 } },
-                { id: 93, name: 'haunter', types: ['ghost', 'poison'], evolves: { method: 'Trade', into: 94 } },
-                { id: 94, name: 'gengar', types: ['ghost', 'poison'], evolves: null },
-                { id: 95, name: 'onix', types: ['rock', 'ground'], evolves: { method: 'Trade holding Metal Coat', into: 208 } },
-                { id: 96, name: 'drowzee', types: ['psychic'], evolves: { level: 26, into: 97 } },
-                { id: 97, name: 'hypno', types: ['psychic'], evolves: null },
-                { id: 98, name: 'krabby', types: ['water'], evolves: { level: 28, into: 99 } },
-                { id: 99, name: 'kingler', types: ['water'], evolves: null },
-                { id: 100, name: 'voltorb', types: ['electric'], evolves: { level: 30, into: 101 } },
-                { id: 101, name: 'electrode', types: ['electric'], evolves: null },
-                { id: 102, name: 'exeggcute', types: ['grass', 'psychic'], evolves: { method: 'Leaf Stone', into: 103 } },
-                { id: 103, name: 'exeggutor', types: ['grass', 'psychic'], evolves: null },
-                { id: 104, name: 'cubone', types: ['ground'], evolves: { level: 28, into: 105 } },
-                { id: 105, name: 'marowak', types: ['ground'], evolves: null },
-                { id: 106, name: 'hitmonlee', types: ['fighting'], evolves: null },
-                { id: 107, name: 'hitmonchan', types: ['fighting'], evolves: null },
-                { id: 108, name: 'lickitung', types: ['normal'], evolves: { method: 'Learn Rollout', into: 463 } },
-                { id: 109, name: 'koffing', types: ['poison'], evolves: { level: 35, into: 110 } },
-                { id: 110, name: 'weezing', types: ['poison'], evolves: null },
-                { id: 111, name: 'rhyhorn', types: ['ground', 'rock'], evolves: { level: 42, into: 112 } },
-                { id: 112, name: 'rhydon', types: ['ground', 'rock'], evolves: { method: 'Trade holding Protector', into: 464 } },
-                { id: 113, name: 'chansey', types: ['normal'], evolves: { method: 'Friendship', into: 242 } },
-                { id: 114, name: 'tangela', types: ['grass'], evolves: { method: 'Learn Ancient Power', into: 465 } },
-                { id: 115, name: 'kangaskhan', types: ['normal'], evolves: null },
-                { id: 116, name: 'horsea', types: ['water'], evolves: { level: 32, into: 117 } },
-                { id: 117, name: 'seadra', types: ['water'], evolves: { method: 'Trade holding Dragon Scale', into: 230 } },
-                { id: 118, name: 'goldeen', types: ['water'], evolves: { level: 33, into: 119 } },
-                { id: 119, name: 'seaking', types: ['water'], evolves: null },
-                { id: 120, name: 'staryu', types: ['water'], evolves: { method: 'Water Stone', into: 121 } },
-                { id: 121, name: 'starmie', types: ['water', 'psychic'], evolves: null },
-                { id: 122, name: 'mr-mime', types: ['psychic', 'fairy'], evolves: null },
-                { id: 123, name: 'scyther', types: ['bug', 'flying'], evolves: { method: 'Trade holding Metal Coat', into: 212 } },
-                { id: 124, name: 'jynx', types: ['ice', 'psychic'], evolves: null },
-                { id: 125, name: 'electabuzz', types: ['electric'], evolves: { method: 'Trade holding Electirizer', into: 466 } },
-                { id: 126, name: 'magmar', types: ['fire'], evolves: { method: 'Trade holding Magmarizer', into: 467 } },
-                { id: 127, name: 'pinsir', types: ['bug'], evolves: null },
-                { id: 128, name: 'tauros', types: ['normal'], evolves: null },
-                { id: 129, name: 'magikarp', types: ['water'], evolves: { level: 20, into: 130 } },
-                { id: 130, name: 'gyarados', types: ['water', 'flying'], evolves: null },
-                { id: 131, name: 'lapras', types: ['water', 'ice'], evolves: null },
-                { id: 132, name: 'ditto', types: ['normal'], evolves: null },
-                { id: 133, name: 'eevee', types: ['normal'], evolves: { method: 'Multiple (see evolutions)', into: 134 } },
-                { id: 134, name: 'vaporeon', types: ['water'], evolves: null },
-                { id: 135, name: 'jolteon', types: ['electric'], evolves: null },
-                { id: 136, name: 'flareon', types: ['fire'], evolves: null },
-                { id: 137, name: 'porygon', types: ['normal'], evolves: { method: 'Trade holding Up-Grade', into: 233 } },
-                { id: 138, name: 'omanyte', types: ['rock', 'water'], evolves: { level: 40, into: 139 } },
-                { id: 139, name: 'omastar', types: ['rock', 'water'], evolves: null },
-                { id: 140, name: 'kabuto', types: ['rock', 'water'], evolves: { level: 40, into: 141 } },
-                { id: 141, name: 'kabutops', types: ['rock', 'water'], evolves: null },
-                { id: 142, name: 'aerodactyl', types: ['rock', 'flying'], evolves: null },
-                { id: 143, name: 'snorlax', types: ['normal'], evolves: null },
-                { id: 144, name: 'articuno', types: ['ice', 'flying'], evolves: null },
-                { id: 145, name: 'zapdos', types: ['electric', 'flying'], evolves: null },
-                { id: 146, name: 'moltres', types: ['fire', 'flying'], evolves: null },
-                { id: 147, name: 'dratini', types: ['dragon'], evolves: { level: 30, into: 148 } },
-                { id: 148, name: 'dragonair', types: ['dragon'], evolves: { level: 55, into: 149 } },
-                { id: 149, name: 'dragonite', types: ['dragon', 'flying'], evolves: null },
-                { id: 150, name: 'mewtwo', types: ['psychic'], evolves: null },
-                { id: 151, name: 'mew', types: ['psychic'], evolves: null }
-            ];
-
-            const specialEvolutions = {
-                133: [
-                    { id: 133, name: 'eevee', method: 'Base form' },
-                    { id: 134, name: 'vaporeon', method: 'Water Stone' },
-                    { id: 135, name: 'jolteon', method: 'Thunder Stone' },
-                    { id: 136, name: 'flareon', method: 'Fire Stone' }
-                ]
-            };
-
+            // Fetch Pokemon data from PokeAPI
             useEffect(() => {
-                setFilteredPokemon(pokemonData);
+                const fetchAllPokemon = async () => {
+                    try {
+                        setLoading(true);
+
+                        // Fetch the list of all Pokemon (limit to current generation)
+                        const listResponse = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025&offset=0');
+                        const listData = await listResponse.json();
+                        const totalPokemon = listData.results.length;
+
+                        // Fetch details for each Pokemon in batches
+                        const batchSize = 50;
+                        const allPokemon = [];
+
+                        for (let i = 0; i < totalPokemon; i += batchSize) {
+                            const batch = listData.results.slice(i, i + batchSize);
+                            const pokemonPromises = batch.map(async (p) => {
+                                // Extract ID from URL
+                                const id = parseInt(p.url.split('/').slice(-2, -1)[0]);
+
+                                try {
+                                    const response = await fetch(p.url);
+                                    const data = await response.json();
+
+                                    return {
+                                        id: data.id,
+                                        name: data.name,
+                                        types: data.types.map(t => t.type.name),
+                                        evolves: null
+                                    };
+                                } catch (error) {
+                                    console.error(`Error fetching ${p.name}:`, error);
+                                    return null;
+                                }
+                            });
+
+                            const batchResults = await Promise.all(pokemonPromises);
+                            const validResults = batchResults.filter(p => p !== null);
+                            allPokemon.push(...validResults);
+
+                            // Sort by ID and update display progressively
+                            const sortedPokemon = [...allPokemon].sort((a, b) => a.id - b.id);
+                            setPokemonData(sortedPokemon);
+                            setFilteredPokemon(sortedPokemon);
+
+                            // Update progress
+                            setLoadingProgress(Math.round((i + batch.length) / totalPokemon * 100));
+
+                            // Show results after first batch
+                            if (i === 0) {
+                                setLoading(false);
+                            }
+                        }
+
+                        setLoading(false);
+                        setLoadingProgress(100);
+                    } catch (error) {
+                        console.error('Error fetching Pokemon:', error);
+                        setLoading(false);
+                    }
+                };
+
+                fetchAllPokemon();
             }, []);
 
             useEffect(() => {
                 filterPokemon();
-            }, [searchTerm, selectedType]);
+            }, [searchTerm, selectedType, pokemonData]);
 
             const filterPokemon = () => {
-                let filtered = pokemonData;
+                let filtered = [...pokemonData];
                 
                 if (searchTerm) {
                     filtered = filtered.filter(p => 
@@ -355,35 +257,66 @@
                 setFilteredPokemon(filtered);
             };
 
-            const getEvolutionChain = (pokemon) => {
-                if (specialEvolutions[pokemon.id]) {
-                    return specialEvolutions[pokemon.id];
+            const [evolutionChains, setEvolutionChains] = useState({});
+
+            const fetchEvolutionChain = async (pokemonId) => {
+                // Check if we already have it cached
+                if (evolutionChains[pokemonId]) {
+                    return evolutionChains[pokemonId];
                 }
 
-                const chain = [];
-                let current = pokemon;
-                
-                while (true) {
-                    const prevForm = pokemonData.find(p => p.evolves?.into === current.id);
-                    if (!prevForm) break;
-                    current = prevForm;
+                try {
+                    // Fetch species data to get evolution chain URL
+                    const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemonId}`);
+                    const speciesData = await speciesResponse.json();
+
+                    // Fetch evolution chain
+                    const evolutionResponse = await fetch(speciesData.evolution_chain.url);
+                    const evolutionData = await evolutionResponse.json();
+
+                    // Parse the evolution chain
+                    const chain = [];
+                    let current = evolutionData.chain;
+
+                    const parseEvolution = (evoData, prevMethod = 'Base form') => {
+                        const id = parseInt(evoData.species.url.split('/').slice(-2, -1)[0]);
+                        const name = evoData.species.name;
+
+                        chain.push({
+                            id,
+                            name,
+                            method: prevMethod
+                        });
+
+                        // Process evolutions
+                        evoData.evolves_to.forEach((evolution) => {
+                            let method = 'Unknown';
+                            if (evolution.evolution_details && evolution.evolution_details.length > 0) {
+                                const detail = evolution.evolution_details[0];
+                                if (detail.min_level) {
+                                    method = `Level ${detail.min_level}`;
+                                } else if (detail.item) {
+                                    method = detail.item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                } else if (detail.trigger.name === 'trade') {
+                                    method = 'Trade';
+                                } else {
+                                    method = detail.trigger.name.charAt(0).toUpperCase() + detail.trigger.name.slice(1);
+                                }
+                            }
+                            parseEvolution(evolution, method);
+                        });
+                    };
+
+                    parseEvolution(current);
+
+                    // Cache it
+                    setEvolutionChains(prev => ({ ...prev, [pokemonId]: chain }));
+
+                    return chain;
+                } catch (error) {
+                    console.error('Error fetching evolution chain:', error);
+                    return [];
                 }
-                
-                chain.push({ id: current.id, name: current.name, method: 'Base form', evolves: current.evolves });
-                
-                while (current.evolves?.into) {
-                    const next = pokemonData.find(p => p.id === current.evolves.into);
-                    if (!next) break;
-                    
-                    const method = current.evolves.level 
-                        ? `Level ${current.evolves.level}`
-                        : current.evolves.method || 'Unknown';
-                    
-                    chain.push({ id: next.id, name: next.name, method, evolves: next.evolves });
-                    current = next;
-                }
-                
-                return chain;
             };
 
             const handlePokemonClick = (p) => {
@@ -392,6 +325,24 @@
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-rose-400 via-fuchsia-500 to-indigo-500 pb-20">
+                    {loading && (
+                        <div className="fixed inset-0 bg-gradient-to-br from-rose-400 via-fuchsia-500 to-indigo-500 flex items-center justify-center z-50">
+                            <div className="bg-white rounded-3xl shadow-2xl p-12 border-8 border-black text-center max-w-md">
+                                <div className="mb-6">
+                                    <Zap className="w-24 h-24 text-yellow-500 mx-auto animate-pulse" fill="currentColor" />
+                                </div>
+                                <h2 className="logo-text text-4xl mb-4 text-gray-800">Loading Pokémon</h2>
+                                <p className="text-xl font-bold mb-6 text-gray-600">Gotta Fetch 'Em All!</p>
+                                <div className="bg-gray-200 rounded-full h-6 border-4 border-black overflow-hidden">
+                                    <div
+                                        className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 h-full transition-all duration-300"
+                                        style={{ width: `${loadingProgress}%` }}
+                                    />
+                                </div>
+                                <p className="text-2xl font-black mt-4 text-gray-800">{loadingProgress}%</p>
+                            </div>
+                        </div>
+                    )}
                     <header className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 shadow-2xl sticky top-0 z-50 border-b-8 border-black">
                         <div className="container mx-auto px-4 py-6">
                             <div className="flex items-center justify-between mb-6">
@@ -457,9 +408,9 @@
                         ) : (
                             <>
                                 {selectedPokemon ? (
-                                    <PokemonDetail 
-                                        pokemon={selectedPokemon} 
-                                        evolutionChain={getEvolutionChain(selectedPokemon)}
+                                    <PokemonDetail
+                                        pokemon={selectedPokemon}
+                                        fetchEvolutionChain={fetchEvolutionChain}
                                         typeColors={typeColors}
                                         onClose={() => setSelectedPokemon(null)}
                                     />
@@ -551,20 +502,57 @@
             );
         }
 
-        function PokemonDetail({ pokemon, evolutionChain, typeColors, onClose }) {
-            const generateStats = (id) => {
-                const seed = id * 7;
-                return [
-                    { stat: { name: 'HP' }, base_stat: 40 + (seed % 70) },
-                    { stat: { name: 'Attack' }, base_stat: 45 + ((seed * 3) % 75) },
-                    { stat: { name: 'Defense' }, base_stat: 40 + ((seed * 5) % 80) },
-                    { stat: { name: 'Sp. Attack' }, base_stat: 50 + ((seed * 7) % 70) },
-                    { stat: { name: 'Sp. Defense' }, base_stat: 45 + ((seed * 11) % 75) },
-                    { stat: { name: 'Speed' }, base_stat: 40 + ((seed * 13) % 90) }
-                ];
-            };
+        function PokemonDetail({ pokemon, fetchEvolutionChain, typeColors, onClose }) {
+            const [evolutionChain, setEvolutionChain] = useState([]);
+            const [loadingEvolution, setLoadingEvolution] = useState(true);
+            const [stats, setStats] = useState([]);
 
-            const stats = generateStats(pokemon.id);
+            useEffect(() => {
+                // Fetch Pokemon details including stats
+                const fetchPokemonDetails = async () => {
+                    try {
+                        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`);
+                        const data = await response.json();
+
+                        setStats(data.stats.map(s => ({
+                            stat: { name: s.stat.name },
+                            base_stat: s.base_stat
+                        })));
+                    } catch (error) {
+                        console.error('Error fetching Pokemon details:', error);
+                        // Fallback to generated stats
+                        const seed = pokemon.id * 7;
+                        setStats([
+                            { stat: { name: 'HP' }, base_stat: 40 + (seed % 70) },
+                            { stat: { name: 'Attack' }, base_stat: 45 + ((seed * 3) % 75) },
+                            { stat: { name: 'Defense' }, base_stat: 40 + ((seed * 5) % 80) },
+                            { stat: { name: 'special-attack' }, base_stat: 50 + ((seed * 7) % 70) },
+                            { stat: { name: 'special-defense' }, base_stat: 45 + ((seed * 11) % 75) },
+                            { stat: { name: 'Speed' }, base_stat: 40 + ((seed * 13) % 90) }
+                        ]);
+                    }
+
+                    // Fetch evolution chain
+                    setLoadingEvolution(true);
+                    const chain = await fetchEvolutionChain(pokemon.id);
+                    setEvolutionChain(chain || []);
+                    setLoadingEvolution(false);
+                };
+
+                fetchPokemonDetails();
+            }, [pokemon.id, fetchEvolutionChain]);
+
+            const formatStatName = (name) => {
+                const nameMap = {
+                    'hp': 'HP',
+                    'attack': 'Attack',
+                    'defense': 'Defense',
+                    'special-attack': 'Sp. Attack',
+                    'special-defense': 'Sp. Defense',
+                    'speed': 'Speed'
+                };
+                return nameMap[name] || name;
+            };
 
             return (
                 <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-black max-w-6xl mx-auto slide-in">
@@ -577,10 +565,10 @@
 
                     <div className="grid md:grid-cols-2 gap-8 mb-8">
                         <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl p-8 border-4 border-black">
-                            <img 
+                            <img
                                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
-                                alt={pokemon.name} 
-                                className="w-full max-w-sm mx-auto" 
+                                alt={pokemon.name}
+                                className="w-full max-w-sm mx-auto"
                             />
                         </div>
 
@@ -604,42 +592,56 @@
 
                             <div className="bg-gray-100 rounded-2xl p-6 border-4 border-black">
                                 <h3 className="font-black text-2xl mb-4 text-gray-800">BASE STATS</h3>
-                                <div className="space-y-3">
-                                    {stats.map(stat => (
-                                        <div key={stat.stat.name}>
-                                            <div className="flex justify-between mb-1">
-                                                <span className="font-bold uppercase text-sm">
-                                                    {stat.stat.name}
-                                                </span>
-                                                <span className="font-black">{stat.base_stat}</span>
+                                {stats.length === 0 ? (
+                                    <div className="text-center py-4">
+                                        <div className="animate-spin inline-block w-8 h-8 border-4 border-gray-300 border-t-gray-800 rounded-full"></div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {stats.map(stat => (
+                                            <div key={stat.stat.name}>
+                                                <div className="flex justify-between mb-1">
+                                                    <span className="font-bold uppercase text-sm">
+                                                        {formatStatName(stat.stat.name)}
+                                                    </span>
+                                                    <span className="font-black">{stat.base_stat}</span>
+                                                </div>
+                                                <div className="bg-gray-300 rounded-full h-3 border-2 border-black overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-1000"
+                                                        style={{
+                                                            width: `${(stat.base_stat / 255) * 100}%`,
+                                                            backgroundColor: stat.base_stat > 100 ? '#10b981' : stat.base_stat > 50 ? '#fbbf24' : '#ef4444'
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="bg-gray-300 rounded-full h-3 border-2 border-black overflow-hidden">
-                                                <div
-                                                    className="h-full rounded-full transition-all duration-1000"
-                                                    style={{
-                                                        width: `${(stat.base_stat / 255) * 100}%`,
-                                                        backgroundColor: stat.base_stat > 100 ? '#10b981' : stat.base_stat > 50 ? '#fbbf24' : '#ef4444'
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {evolutionChain && evolutionChain.length > 1 && (
+                    {loadingEvolution ? (
+                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black">
+                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
+                            <div className="text-center py-8">
+                                <div className="animate-spin inline-block w-12 h-12 border-4 border-purple-300 border-t-purple-600 rounded-full"></div>
+                                <p className="mt-4 font-bold text-gray-600">Loading evolution data...</p>
+                            </div>
+                        </div>
+                    ) : evolutionChain && evolutionChain.length > 1 ? (
                         <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black">
                             <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
                             <div className="flex items-center justify-center flex-wrap gap-4">
                                 {evolutionChain.map((evo, index) => (
                                     <React.Fragment key={evo.id}>
                                         <div className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px]">
-                                            <img 
+                                            <img
                                                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`}
-                                                alt={evo.name} 
-                                                className="w-32 h-32 object-contain mb-2" 
+                                                alt={evo.name}
+                                                className="w-32 h-32 object-contain mb-2"
                                             />
                                             <span className="text-gray-500 font-black text-sm">#{evo.id.toString().padStart(3, '0')}</span>
                                             <span className="font-black text-xl capitalize text-gray-800">{evo.name.replace('-', ' ')}</span>
@@ -648,7 +650,7 @@
                                             <div className="flex flex-col items-center">
                                                 <ChevronRight className="w-12 h-12 text-purple-600 evolution-arrow" strokeWidth={4} />
                                                 <span className="mt-2 px-4 py-2 bg-yellow-400 rounded-full font-black text-sm border-3 border-black shadow-lg">
-                                                    {evo.evolves?.level ? `Level ${evo.evolves.level}` : evo.evolves?.method || evolutionChain[index + 1].method}
+                                                    {evolutionChain[index + 1].method}
                                                 </span>
                                             </div>
                                         )}
@@ -656,7 +658,7 @@
                                 ))}
                             </div>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             );
         }
