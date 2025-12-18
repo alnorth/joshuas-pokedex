@@ -288,20 +288,187 @@
                             method: prevMethod
                         });
 
+                        // Lookup table for "other" trigger evolutions that require special explanations
+                        const otherEvolutionDetails = {
+                            'annihilape': 'Level up after using Rage Fist 20 times',
+                            'wyrdeer': 'Level up after using Agile Style Psyshield Bash 20 times',
+                            'overqwil': 'Level up after using Strong Style Barb Barrage 20 times',
+                            'basculegion': 'Level up after losing 294+ HP from recoil damage',
+                            'kingambit': 'Level up after defeating 3 Bisharp that hold Leader\'s Crest',
+                            'gholdengo': 'Level up after collecting 999 Gimmighoul Coins',
+                            'pawmot': 'Level up after walking 1000 steps in Let\'s Go mode',
+                            'brambleghast': 'Level up after walking 1000 steps in Let\'s Go mode',
+                            'rabsca': 'Level up after walking 1000 steps in Let\'s Go mode',
+                            'ursaluna': 'Use Peat Block during a full moon',
+                            'gimmighoul': 'Collect 999 Gimmighoul Coins',
+                        };
+
                         // Process evolutions
                         evoData.evolves_to.forEach((evolution) => {
                             let method = 'Unknown';
                             if (evolution.evolution_details && evolution.evolution_details.length > 0) {
                                 const detail = evolution.evolution_details[0];
-                                if (detail.min_level) {
-                                    method = `Level ${detail.min_level}`;
-                                } else if (detail.item) {
-                                    method = detail.item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                const parts = [];
+
+                                // Check for "other" trigger first - use lookup table
+                                if (detail.trigger.name === 'other') {
+                                    const speciesName = evolution.species.name;
+                                    if (otherEvolutionDetails[speciesName]) {
+                                        // Use the predefined description from lookup table
+                                        method = otherEvolutionDetails[speciesName];
+                                        parseEvolution(evolution, method);
+                                        return; // Skip the rest of the processing
+                                    } else {
+                                        // Unknown "other" trigger - will be handled at the end
+                                        parts.push('Special requirement');
+                                    }
+                                } else if (detail.trigger.name === 'level-up') {
+                                    if (detail.min_level) {
+                                        parts.push(`Level ${detail.min_level}`);
+                                    } else {
+                                        parts.push('Level up');
+                                    }
                                 } else if (detail.trigger.name === 'trade') {
-                                    method = 'Trade';
+                                    parts.push('Trade');
+                                } else if (detail.trigger.name === 'use-item') {
+                                    parts.push('Use');
+                                } else if (detail.trigger.name === 'shed') {
+                                    parts.push('Level up (empty party slot + Poké Ball)');
                                 } else {
-                                    method = detail.trigger.name.charAt(0).toUpperCase() + detail.trigger.name.slice(1);
+                                    parts.push(detail.trigger.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
                                 }
+
+                                // Add item information
+                                if (detail.item) {
+                                    const itemName = detail.item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    if (detail.trigger.name === 'use-item') {
+                                        parts[0] = itemName;
+                                    } else {
+                                        parts.push(`+ ${itemName}`);
+                                    }
+                                }
+
+                                // Add held item
+                                if (detail.held_item) {
+                                    const heldItemName = detail.held_item.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`holding ${heldItemName}`);
+                                }
+
+                                // Add happiness requirement
+                                if (detail.min_happiness) {
+                                    parts.push(`with ${detail.min_happiness}+ happiness`);
+                                }
+
+                                // Add affection requirement
+                                if (detail.min_affection) {
+                                    parts.push(`with ${detail.min_affection}+ affection`);
+                                }
+
+                                // Add beauty requirement
+                                if (detail.min_beauty) {
+                                    parts.push(`with ${detail.min_beauty}+ beauty`);
+                                }
+
+                                // Add time of day
+                                if (detail.time_of_day) {
+                                    parts.push(`during ${detail.time_of_day}`);
+                                }
+
+                                // Add location
+                                if (detail.location) {
+                                    const locationName = detail.location.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`at ${locationName}`);
+                                }
+
+                                // Add move requirement
+                                if (detail.known_move) {
+                                    const moveName = detail.known_move.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`knowing ${moveName}`);
+                                }
+
+                                // Add move type requirement
+                                if (detail.known_move_type) {
+                                    const moveType = detail.known_move_type.name.charAt(0).toUpperCase() + detail.known_move_type.name.slice(1);
+                                    parts.push(`knowing ${moveType}-type move`);
+                                }
+
+                                // Add party species requirement
+                                if (detail.party_species) {
+                                    const speciesName = detail.party_species.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`with ${speciesName} in party`);
+                                }
+
+                                // Add party type requirement
+                                if (detail.party_type) {
+                                    const partyType = detail.party_type.name.charAt(0).toUpperCase() + detail.party_type.name.slice(1);
+                                    parts.push(`with ${partyType}-type in party`);
+                                }
+
+                                // Add physical stats requirement
+                                if (detail.relative_physical_stats !== null) {
+                                    if (detail.relative_physical_stats === 1) {
+                                        parts.push('(Attack > Defense)');
+                                    } else if (detail.relative_physical_stats === -1) {
+                                        parts.push('(Attack < Defense)');
+                                    } else if (detail.relative_physical_stats === 0) {
+                                        parts.push('(Attack = Defense)');
+                                    }
+                                }
+
+                                // Add gender requirement
+                                if (detail.gender !== null) {
+                                    const genderText = detail.gender === 1 ? 'Female' : 'Male';
+                                    parts.push(`(${genderText} only)`);
+                                }
+
+                                // Add overworld rain requirement
+                                if (detail.needs_overworld_rain) {
+                                    parts.push('during rain');
+                                }
+
+                                // Add turn upside down requirement
+                                if (detail.turn_upside_down) {
+                                    parts.push('(turn device upside down)');
+                                }
+
+                                // Add trade species requirement
+                                if (detail.trade_species) {
+                                    const tradeSpeciesName = detail.trade_species.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                    parts.push(`for ${tradeSpeciesName}`);
+                                }
+
+                                // Check for additional unhandled fields and add them as hints
+                                const handledFields = [
+                                    'trigger', 'item', 'held_item', 'min_level', 'min_happiness', 'min_affection',
+                                    'min_beauty', 'time_of_day', 'location', 'known_move', 'known_move_type',
+                                    'party_species', 'party_type', 'relative_physical_stats', 'gender',
+                                    'needs_overworld_rain', 'turn_upside_down', 'trade_species'
+                                ];
+
+                                // Look for any fields we haven't handled yet
+                                const unhandledInfo = [];
+                                Object.keys(detail).forEach(key => {
+                                    if (!handledFields.includes(key) && detail[key] !== null && detail[key] !== false && detail[key] !== '') {
+                                        // Format the field name and value
+                                        const fieldName = key.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                        let value = detail[key];
+
+                                        // Handle different value types
+                                        if (typeof value === 'object' && value.name) {
+                                            value = value.name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                                        } else if (typeof value === 'boolean') {
+                                            value = value ? 'Yes' : 'No';
+                                        }
+
+                                        unhandledInfo.push(`${fieldName}: ${value}`);
+                                    }
+                                });
+
+                                if (unhandledInfo.length > 0) {
+                                    parts.push(`(${unhandledInfo.join(', ')})`);
+                                }
+
+                                method = parts.join(' ');
                             }
                             parseEvolution(evolution, method);
                         });
