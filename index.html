@@ -944,6 +944,61 @@
                         </div>
                     </div>
 
+                    {loadingEvolution ? (
+                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black mb-8">
+                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
+                            <div className="text-center py-8">
+                                <div className="animate-spin inline-block w-12 h-12 border-4 border-purple-300 border-t-purple-600 rounded-full"></div>
+                                <p className="mt-4 font-bold text-gray-600">Loading evolution data...</p>
+                            </div>
+                        </div>
+                    ) : evolutionChain && evolutionChain.length > 1 ? (
+                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black mb-8">
+                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
+                            <div className="flex items-center justify-center flex-wrap gap-4">
+                                {evolutionChain.map((evo, index) => (
+                                    <React.Fragment key={evo.id}>
+                                        <div
+                                            className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
+                                            onClick={() => onSelectPokemon(evo.id)}
+                                        >
+                                            <img
+                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`}
+                                                alt={evo.name}
+                                                className="w-32 h-32 object-contain mb-2"
+                                                onError={(e) => {
+                                                    const fallbacks = [
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${evo.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${evo.id}.gif`
+                                                    ];
+                                                    const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                                    if (attempt < fallbacks.length) {
+                                                        e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                        e.target.src = fallbacks[attempt];
+                                                    } else {
+                                                        e.target.style.display = 'none';
+                                                        e.target.parentElement.innerHTML += '<div class="flex items-center justify-center w-32 h-32 text-gray-400 font-bold text-xs">No Image</div>';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-gray-500 font-black text-sm">#{evo.id.toString().padStart(3, '0')}</span>
+                                            <span className="font-black text-xl capitalize text-gray-800">{evo.name.replace('-', ' ')}</span>
+                                        </div>
+                                        {index < evolutionChain.length - 1 && (
+                                            <div className="flex flex-col items-center">
+                                                <ChevronRight className="w-12 h-12 text-purple-600 evolution-arrow" strokeWidth={4} />
+                                                <span className="mt-2 px-4 py-2 bg-yellow-400 rounded-full font-black text-sm border-3 border-black shadow-lg">
+                                                    {evolutionChain[index + 1].method}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
+
                     <div className="bg-gradient-to-br from-green-100 to-teal-100 rounded-2xl p-8 border-4 border-black mb-8">
                         <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">LEARNABLE MOVES</h3>
                         {loadingMoves ? (
@@ -1020,61 +1075,6 @@
                             </div>
                         )}
                     </div>
-
-                    {loadingEvolution ? (
-                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black">
-                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
-                            <div className="text-center py-8">
-                                <div className="animate-spin inline-block w-12 h-12 border-4 border-purple-300 border-t-purple-600 rounded-full"></div>
-                                <p className="mt-4 font-bold text-gray-600">Loading evolution data...</p>
-                            </div>
-                        </div>
-                    ) : evolutionChain && evolutionChain.length > 1 ? (
-                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 border-4 border-black">
-                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">EVOLUTION CHAIN</h3>
-                            <div className="flex items-center justify-center flex-wrap gap-4">
-                                {evolutionChain.map((evo, index) => (
-                                    <React.Fragment key={evo.id}>
-                                        <div
-                                            className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
-                                            onClick={() => onSelectPokemon(evo.id)}
-                                        >
-                                            <img
-                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`}
-                                                alt={evo.name}
-                                                className="w-32 h-32 object-contain mb-2"
-                                                onError={(e) => {
-                                                    const fallbacks = [
-                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`,
-                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${evo.id}.png`,
-                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${evo.id}.gif`
-                                                    ];
-                                                    const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
-                                                    if (attempt < fallbacks.length) {
-                                                        e.target.dataset.fallbackAttempt = (attempt + 1).toString();
-                                                        e.target.src = fallbacks[attempt];
-                                                    } else {
-                                                        e.target.style.display = 'none';
-                                                        e.target.parentElement.innerHTML += '<div class="flex items-center justify-center w-32 h-32 text-gray-400 font-bold text-xs">No Image</div>';
-                                                    }
-                                                }}
-                                            />
-                                            <span className="text-gray-500 font-black text-sm">#{evo.id.toString().padStart(3, '0')}</span>
-                                            <span className="font-black text-xl capitalize text-gray-800">{evo.name.replace('-', ' ')}</span>
-                                        </div>
-                                        {index < evolutionChain.length - 1 && (
-                                            <div className="flex flex-col items-center">
-                                                <ChevronRight className="w-12 h-12 text-purple-600 evolution-arrow" strokeWidth={4} />
-                                                <span className="mt-2 px-4 py-2 bg-yellow-400 rounded-full font-black text-sm border-3 border-black shadow-lg">
-                                                    {evolutionChain[index + 1].method}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </div>
-                        </div>
-                    ) : null}
                 </div>
             );
         }
