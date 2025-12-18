@@ -195,11 +195,18 @@
                                     const response = await fetch(p.url);
                                     const data = await response.json();
 
+                                    // Get the best available sprite
+                                    let spriteUrl = data.sprites?.other?.['official-artwork']?.front_default ||
+                                                   data.sprites?.front_default ||
+                                                   data.sprites?.other?.home?.front_default ||
+                                                   data.sprites?.other?.showdown?.front_default;
+
                                     return {
                                         id: data.id,
                                         name: data.name,
                                         types: data.types.map(t => t.type.name),
-                                        evolves: null
+                                        evolves: null,
+                                        spriteUrl: spriteUrl
                                     };
                                 } catch (error) {
                                     console.error(`Error fetching ${p.name}:`, error);
@@ -607,26 +614,15 @@
                                                     >
                                                         <div className="text-center">
                                                             <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-4 mb-4 border-2 border-black">
-                                                                <img
-                                                                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
-                                                                    alt={p.name}
-                                                                    className="w-full h-32 object-contain"
-                                                                    onError={(e) => {
-                                                                        const fallbacks = [
-                                                                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
-                                                                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${p.id}.png`,
-                                                                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${p.id}.gif`
-                                                                        ];
-                                                                        const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
-                                                                        if (attempt < fallbacks.length) {
-                                                                            e.target.dataset.fallbackAttempt = (attempt + 1).toString();
-                                                                            e.target.src = fallbacks[attempt];
-                                                                        } else {
-                                                                            e.target.style.display = 'none';
-                                                                            e.target.parentElement.innerHTML += '<div class="flex items-center justify-center h-32 text-gray-400 font-bold">No Image</div>';
-                                                                        }
-                                                                    }}
-                                                                />
+                                                                {p.spriteUrl ? (
+                                                                    <img
+                                                                        src={p.spriteUrl}
+                                                                        alt={p.name}
+                                                                        className="w-full h-32 object-contain"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex items-center justify-center h-32 text-gray-400 font-bold">No Image</div>
+                                                                )}
                                                             </div>
                                                             <span className="text-gray-500 font-black text-sm">#{p.id.toString().padStart(3, '0')}</span>
                                                             <h3 className="font-black text-xl capitalize mb-3 text-gray-800">
@@ -656,20 +652,15 @@
                                                         className={`pokemon-card bg-white rounded-2xl p-6 cursor-pointer shadow-2xl border-4 border-black hover:border-yellow-400 flex items-center gap-6 slide-in stagger-${index % 3 + 1}`}
                                                     >
                                                         <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-4 border-2 border-black flex-shrink-0">
-                                                            <img
-                                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
-                                                                alt={p.name}
-                                                                className="w-24 h-24 object-contain"
-                                                                onError={(e) => {
-                                                                    if (!e.target.dataset.fallbackAttempted) {
-                                                                        e.target.dataset.fallbackAttempted = 'true';
-                                                                        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
-                                                                    } else {
-                                                                        e.target.style.display = 'none';
-                                                                        e.target.parentElement.innerHTML += '<div class="flex items-center justify-center w-24 h-24 text-gray-400 font-bold text-sm">No Image</div>';
-                                                                    }
-                                                                }}
-                                                            />
+                                                            {p.spriteUrl ? (
+                                                                <img
+                                                                    src={p.spriteUrl}
+                                                                    alt={p.name}
+                                                                    className="w-24 h-24 object-contain"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex items-center justify-center w-24 h-24 text-gray-400 font-bold text-sm">No Image</div>
+                                                            )}
                                                         </div>
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-4 mb-2">
@@ -807,9 +798,15 @@
                                 alt={pokemon.name}
                                 className="w-full max-w-sm mx-auto"
                                 onError={(e) => {
-                                    if (!e.target.dataset.fallbackAttempted) {
-                                        e.target.dataset.fallbackAttempted = 'true';
-                                        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+                                    const fallbacks = [
+                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`,
+                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemon.id}.png`,
+                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemon.id}.gif`
+                                    ];
+                                    const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                    if (attempt < fallbacks.length) {
+                                        e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                        e.target.src = fallbacks[attempt];
                                     } else {
                                         e.target.style.display = 'none';
                                         e.target.parentElement.innerHTML += '<div class="flex items-center justify-center h-64 text-gray-400 font-bold text-xl">No Image Available</div>';
@@ -966,9 +963,15 @@
                                                 alt={evo.name}
                                                 className="w-32 h-32 object-contain mb-2"
                                                 onError={(e) => {
-                                                    if (!e.target.dataset.fallbackAttempted) {
-                                                        e.target.dataset.fallbackAttempted = 'true';
-                                                        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`;
+                                                    const fallbacks = [
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${evo.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${evo.id}.gif`
+                                                    ];
+                                                    const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                                    if (attempt < fallbacks.length) {
+                                                        e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                        e.target.src = fallbacks[attempt];
                                                     } else {
                                                         e.target.style.display = 'none';
                                                         e.target.parentElement.innerHTML += '<div class="flex items-center justify-center w-32 h-32 text-gray-400 font-bold text-xs">No Image</div>';
