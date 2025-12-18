@@ -240,6 +240,14 @@
                 filterPokemon();
             }, [searchTerm, selectedType, pokemonData]);
 
+            useEffect(() => {
+                // When user starts typing, switch back to Pokemon list
+                if (searchTerm) {
+                    setShowTypeChart(false);
+                    setSelectedPokemon(null);
+                }
+            }, [searchTerm]);
+
             const filterPokemon = () => {
                 let filtered = [...pokemonData];
                 
