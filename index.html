@@ -345,6 +345,13 @@
                 }
             }, [selectedPokemon, showTypeChart, initialLoadDone]);
 
+            // Scroll to top when Pokemon is selected
+            useEffect(() => {
+                if (selectedPokemon) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }, [selectedPokemon]);
+
             const filterPokemon = () => {
                 let filtered = [...pokemonData];
                 
@@ -685,6 +692,10 @@
                                         fetchEvolutionChain={fetchEvolutionChain}
                                         typeColors={typeColors}
                                         onClose={() => setSelectedPokemon(null)}
+                                        onSelectPokemon={(pokemonId) => {
+                                            const pokemon = pokemonData.find(p => p.id === pokemonId);
+                                            if (pokemon) setSelectedPokemon(pokemon);
+                                        }}
                                     />
                                 ) : (
                                     <div>
@@ -774,7 +785,7 @@
             );
         }
 
-        function PokemonDetail({ pokemon, fetchEvolutionChain, typeColors, onClose }) {
+        function PokemonDetail({ pokemon, fetchEvolutionChain, typeColors, onClose, onSelectPokemon }) {
             const [evolutionChain, setEvolutionChain] = useState([]);
             const [loadingEvolution, setLoadingEvolution] = useState(true);
             const [stats, setStats] = useState([]);
@@ -1024,7 +1035,10 @@
                             <div className="flex items-center justify-center flex-wrap gap-4">
                                 {evolutionChain.map((evo, index) => (
                                     <React.Fragment key={evo.id}>
-                                        <div className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px]">
+                                        <div
+                                            className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
+                                            onClick={() => onSelectPokemon(evo.id)}
+                                        >
                                             <img
                                                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`}
                                                 alt={evo.name}
