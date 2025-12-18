@@ -30,7 +30,10 @@ The application is entirely self-contained in `index.html`:
    - Evolution chain with detailed trigger information
    - Types and visual artwork
 
-3. **TypeEffectivenessChart** (index.html:833) - Interactive type matchup grid
+3. **TypeEffectivenessChart** (index.html:1082) - Type effectiveness display showing:
+   - Card-based layout (responsive grid: 1 column mobile, 2 medium, 3 large screens)
+   - Each type card displays weaknesses, resistances, and immunities
+   - Color-coded type badges for visual clarity
 
 ### Data Flow
 
