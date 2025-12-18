@@ -176,8 +176,8 @@
                     try {
                         setLoading(true);
 
-                        // Fetch the list of all Pokemon (limit to current generation)
-                        const listResponse = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025&offset=0');
+                        // Fetch the list of all Pokemon (including forms and variants)
+                        const listResponse = await fetch('https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0');
                         const listData = await listResponse.json();
                         const totalPokemon = listData.results.length;
 
@@ -607,10 +607,25 @@
                                                     >
                                                         <div className="text-center">
                                                             <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-4 mb-4 border-2 border-black">
-                                                                <img 
+                                                                <img
                                                                     src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
-                                                                    alt={p.name} 
-                                                                    className="w-full h-32 object-contain" 
+                                                                    alt={p.name}
+                                                                    className="w-full h-32 object-contain"
+                                                                    onError={(e) => {
+                                                                        const fallbacks = [
+                                                                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
+                                                                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${p.id}.png`,
+                                                                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${p.id}.gif`
+                                                                        ];
+                                                                        const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                                                        if (attempt < fallbacks.length) {
+                                                                            e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                                            e.target.src = fallbacks[attempt];
+                                                                        } else {
+                                                                            e.target.style.display = 'none';
+                                                                            e.target.parentElement.innerHTML += '<div class="flex items-center justify-center h-32 text-gray-400 font-bold">No Image</div>';
+                                                                        }
+                                                                    }}
                                                                 />
                                                             </div>
                                                             <span className="text-gray-500 font-black text-sm">#{p.id.toString().padStart(3, '0')}</span>
@@ -641,10 +656,19 @@
                                                         className={`pokemon-card bg-white rounded-2xl p-6 cursor-pointer shadow-2xl border-4 border-black hover:border-yellow-400 flex items-center gap-6 slide-in stagger-${index % 3 + 1}`}
                                                     >
                                                         <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl p-4 border-2 border-black flex-shrink-0">
-                                                            <img 
+                                                            <img
                                                                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
-                                                                alt={p.name} 
-                                                                className="w-24 h-24 object-contain" 
+                                                                alt={p.name}
+                                                                className="w-24 h-24 object-contain"
+                                                                onError={(e) => {
+                                                                    if (!e.target.dataset.fallbackAttempted) {
+                                                                        e.target.dataset.fallbackAttempted = 'true';
+                                                                        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+                                                                    } else {
+                                                                        e.target.style.display = 'none';
+                                                                        e.target.parentElement.innerHTML += '<div class="flex items-center justify-center w-24 h-24 text-gray-400 font-bold text-sm">No Image</div>';
+                                                                    }
+                                                                }}
                                                             />
                                                         </div>
                                                         <div className="flex-1">
@@ -782,6 +806,15 @@
                                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
                                 alt={pokemon.name}
                                 className="w-full max-w-sm mx-auto"
+                                onError={(e) => {
+                                    if (!e.target.dataset.fallbackAttempted) {
+                                        e.target.dataset.fallbackAttempted = 'true';
+                                        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+                                    } else {
+                                        e.target.style.display = 'none';
+                                        e.target.parentElement.innerHTML += '<div class="flex items-center justify-center h-64 text-gray-400 font-bold text-xl">No Image Available</div>';
+                                    }
+                                }}
                             />
                         </div>
 
@@ -932,6 +965,15 @@
                                                 src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`}
                                                 alt={evo.name}
                                                 className="w-32 h-32 object-contain mb-2"
+                                                onError={(e) => {
+                                                    if (!e.target.dataset.fallbackAttempted) {
+                                                        e.target.dataset.fallbackAttempted = 'true';
+                                                        e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`;
+                                                    } else {
+                                                        e.target.style.display = 'none';
+                                                        e.target.parentElement.innerHTML += '<div class="flex items-center justify-center w-32 h-32 text-gray-400 font-bold text-xs">No Image</div>';
+                                                    }
+                                                }}
                                             />
                                             <span className="text-gray-500 font-black text-sm">#{evo.id.toString().padStart(3, '0')}</span>
                                             <span className="font-black text-xl capitalize text-gray-800">{evo.name.replace('-', ' ')}</span>
