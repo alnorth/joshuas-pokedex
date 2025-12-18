@@ -288,19 +288,41 @@
                             method: prevMethod
                         });
 
+                        // Lookup table for "other" trigger evolutions that require special explanations
+                        const otherEvolutionDetails = {
+                            'annihilape': 'Level up after using Rage Fist 20 times',
+                            'wyrdeer': 'Level up after using Agile Style Psyshield Bash 20 times',
+                            'overqwil': 'Level up after using Strong Style Barb Barrage 20 times',
+                            'basculegion': 'Level up after losing 294+ HP from recoil damage',
+                            'kingambit': 'Level up after defeating 3 Bisharp that hold Leader\'s Crest',
+                            'gholdengo': 'Level up after collecting 999 Gimmighoul Coins',
+                            'pawmot': 'Level up after walking 1000 steps in Let\'s Go mode',
+                            'brambleghast': 'Level up after walking 1000 steps in Let\'s Go mode',
+                            'rabsca': 'Level up after walking 1000 steps in Let\'s Go mode',
+                            'ursaluna': 'Use Peat Block during a full moon',
+                            'gimmighoul': 'Collect 999 Gimmighoul Coins',
+                        };
+
                         // Process evolutions
                         evoData.evolves_to.forEach((evolution) => {
                             let method = 'Unknown';
                             if (evolution.evolution_details && evolution.evolution_details.length > 0) {
                                 const detail = evolution.evolution_details[0];
-
-                                // Debug: log evolution details to see what fields are present
-                                console.log('Evolution details for', evolution.species.name, ':', detail);
-
                                 const parts = [];
 
-                                // Start with trigger type
-                                if (detail.trigger.name === 'level-up') {
+                                // Check for "other" trigger first - use lookup table
+                                if (detail.trigger.name === 'other') {
+                                    const speciesName = evolution.species.name;
+                                    if (otherEvolutionDetails[speciesName]) {
+                                        // Use the predefined description from lookup table
+                                        method = otherEvolutionDetails[speciesName];
+                                        parseEvolution(evolution, method);
+                                        return; // Skip the rest of the processing
+                                    } else {
+                                        // Unknown "other" trigger - will be handled at the end
+                                        parts.push('Special requirement');
+                                    }
+                                } else if (detail.trigger.name === 'level-up') {
                                     if (detail.min_level) {
                                         parts.push(`Level ${detail.min_level}`);
                                     } else {
