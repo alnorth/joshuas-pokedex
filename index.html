@@ -166,6 +166,7 @@
             const [showTypeChart, setShowTypeChart] = useState(false);
             const [loading, setLoading] = useState(true);
             const [loadingProgress, setLoadingProgress] = useState(0);
+            const [initialLoadDone, setInitialLoadDone] = useState(false);
 
             const types = ['normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison', 'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'];
             
@@ -291,6 +292,58 @@
                     setSelectedPokemon(null);
                 }
             }, [searchTerm]);
+
+            // Handle URL hash changes for navigation
+            useEffect(() => {
+                // Only process hash if we have Pokemon data
+                if (pokemonData.length === 0) return;
+
+                const handleHashChange = () => {
+                    const hash = window.location.hash;
+
+                    if (hash.startsWith('#/pokemon/')) {
+                        const pokemonId = parseInt(hash.split('/')[2]);
+                        const pokemon = pokemonData.find(p => p.id === pokemonId);
+                        if (pokemon) {
+                            setSelectedPokemon(pokemon);
+                            setShowTypeChart(false);
+                        }
+                    } else if (hash === '#/types') {
+                        setShowTypeChart(true);
+                        setSelectedPokemon(null);
+                    } else {
+                        // Default to list view
+                        setShowTypeChart(false);
+                        setSelectedPokemon(null);
+                    }
+
+                    // Mark initial load as done after first hash processing
+                    setInitialLoadDone(true);
+                };
+
+                // Handle initial load
+                if (!initialLoadDone) {
+                    handleHashChange();
+                }
+
+                // Listen for hash changes (back/forward buttons)
+                window.addEventListener('hashchange', handleHashChange);
+
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, [pokemonData, initialLoadDone]);
+
+            // Update URL when state changes (but not on initial load)
+            useEffect(() => {
+                if (!initialLoadDone) return;
+
+                if (selectedPokemon) {
+                    window.location.hash = `#/pokemon/${selectedPokemon.id}`;
+                } else if (showTypeChart) {
+                    window.location.hash = '#/types';
+                } else {
+                    window.location.hash = '#/';
+                }
+            }, [selectedPokemon, showTypeChart, initialLoadDone]);
 
             const filterPokemon = () => {
                 let filtered = [...pokemonData];
