@@ -64,6 +64,12 @@ Simply open `index.html` in a web browser. No build step required.
 
 `test-evolution.html` is a standalone test file for debugging evolution data from PokeAPI, specifically testing the Primeape → Annihilape evolution chain.
 
+**Browser Testing with Playwright MCP**:
+- The Playwright MCP server can be used to test the application in a real browser
+- Screenshots are saved to `.playwright-mcp/` directory during testing
+- **IMPORTANT**: After completing browser testing, clear the screenshot directory: `rm -rf .playwright-mcp`
+- The `.playwright-mcp/` directory is already in `.gitignore`
+
 ### Making Changes
 
 Since this is a single-file app:
