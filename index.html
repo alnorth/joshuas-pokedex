@@ -833,87 +833,80 @@
         function TypeEffectivenessChart({ types, typeColors, typeEffectiveness }) {
             return (
                 <div className="bg-white rounded-3xl shadow-2xl p-8 border-8 border-black slide-in">
-                    <h2 className="font-black text-4xl mb-8 text-center text-gray-800">TYPE EFFECTIVENESS CHART</h2>
-                    
-                    <div className="mb-8 grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-500 rounded-lg border-2 border-black"></div>
-                            <span className="font-bold">Super Effective (2x)</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-red-500 rounded-lg border-2 border-black"></div>
-                            <span className="font-bold">Not Very Effective (0.5x)</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gray-800 rounded-lg border-2 border-black"></div>
-                            <span className="font-bold">No Effect (0x)</span>
-                        </div>
-                    </div>
+                    <h2 className="font-black text-4xl mb-8 text-center text-gray-800">TYPE EFFECTIVENESS</h2>
 
-                    <div className="overflow-x-auto scrollbar-hide">
-                        <div className="inline-block min-w-full">
-                            <div className="grid gap-2" style={{ gridTemplateColumns: `120px repeat(${types.length}, 60px)` }}>
-                                <div className="font-black text-center py-2"></div>
-                                {types.map(type => (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {types.map(type => {
+                            const effectiveness = typeEffectiveness[type];
+
+                            return (
+                                <div key={type} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 border-4 border-black shadow-lg">
                                     <div
-                                        key={type}
-                                        className="font-bold text-white text-center py-2 rounded-lg border-2 border-black shadow-lg uppercase text-xs transform -rotate-45 origin-center"
-                                        style={{ backgroundColor: typeColors[type], height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        className="font-black text-white text-center py-4 px-6 rounded-xl border-4 border-black shadow-lg uppercase text-2xl mb-4"
+                                        style={{ backgroundColor: typeColors[type] }}
                                     >
-                                        <span className="block">{type}</span>
+                                        {type}
                                     </div>
-                                ))}
 
-                                {types.map(defendingType => (
-                                    <React.Fragment key={defendingType}>
-                                        <div
-                                            className="font-bold text-white py-3 px-4 rounded-lg border-2 border-black shadow-lg uppercase flex items-center"
-                                            style={{ backgroundColor: typeColors[defendingType] }}
-                                        >
-                                            {defendingType}
-                                        </div>
-                                        {types.map(attackingType => {
-                                            const effectiveness = typeEffectiveness[defendingType];
-                                            let color = 'bg-gray-200';
-                                            let text = '1×';
-                                            
-                                            if (effectiveness.immuneTo.includes(attackingType)) {
-                                                color = 'bg-gray-800';
-                                                text = '0×';
-                                            } else if (effectiveness.weakTo.includes(attackingType)) {
-                                                color = 'bg-green-500';
-                                                text = '2×';
-                                            } else if (effectiveness.resistantTo.includes(attackingType)) {
-                                                color = 'bg-red-500';
-                                                text = '½×';
-                                            }
-                                            
-                                            return (
-                                                <div
-                                                    key={attackingType}
-                                                    className={`effectiveness-cell ${color} rounded-lg border-2 border-black font-black text-white flex items-center justify-center h-16 shadow-md relative`}
-                                                    title={`${attackingType} → ${defendingType}: ${text}`}
-                                                >
-                                                    {text}
+                                    <div className="space-y-4">
+                                        {effectiveness.weakTo.length > 0 && (
+                                            <div>
+                                                <h4 className="font-black text-sm mb-2 text-gray-700 uppercase">Weak To:</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {effectiveness.weakTo.map(weakType => (
+                                                        <span
+                                                            key={weakType}
+                                                            className="px-3 py-1 rounded-lg text-white font-bold text-sm uppercase border-2 border-black shadow-md"
+                                                            style={{ backgroundColor: typeColors[weakType] }}
+                                                        >
+                                                            {weakType}
+                                                        </span>
+                                                    ))}
                                                 </div>
-                                            );
-                                        })}
-                                    </React.Fragment>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                                            </div>
+                                        )}
 
-                    <div className="mt-8 bg-yellow-100 border-4 border-yellow-500 rounded-2xl p-6">
-                        <h3 className="font-black text-xl mb-3">HOW TO READ THIS CHART:</h3>
-                        <ul className="space-y-2 font-bold">
-                            <li>• <strong>Rows</strong> show the defending Pokémon's type</li>
-                            <li>• <strong>Columns</strong> show the attacking move's type</li>
-                            <li>• Find the intersection to see damage multiplier</li>
-                            <li>• <strong>Green (2x)</strong>: Attacking type is super effective against defending type</li>
-                            <li>• <strong>Red (½x)</strong>: Attacking type is not very effective</li>
-                            <li>• <strong>Black (0x)</strong>: Attacking type has no effect</li>
-                        </ul>
+                                        {effectiveness.resistantTo.length > 0 && (
+                                            <div>
+                                                <h4 className="font-black text-sm mb-2 text-gray-700 uppercase">Resistant To:</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {effectiveness.resistantTo.map(resistType => (
+                                                        <span
+                                                            key={resistType}
+                                                            className="px-3 py-1 rounded-lg text-white font-bold text-sm uppercase border-2 border-black shadow-md"
+                                                            style={{ backgroundColor: typeColors[resistType] }}
+                                                        >
+                                                            {resistType}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {effectiveness.immuneTo.length > 0 && (
+                                            <div>
+                                                <h4 className="font-black text-sm mb-2 text-gray-700 uppercase">Immune To:</h4>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {effectiveness.immuneTo.map(immuneType => (
+                                                        <span
+                                                            key={immuneType}
+                                                            className="px-3 py-1 rounded-lg text-white font-bold text-sm uppercase border-2 border-black shadow-md"
+                                                            style={{ backgroundColor: typeColors[immuneType] }}
+                                                        >
+                                                            {immuneType}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {effectiveness.weakTo.length === 0 && effectiveness.resistantTo.length === 0 && effectiveness.immuneTo.length === 0 && (
+                                            <p className="text-gray-500 italic text-center py-4">No special effectiveness</p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
