@@ -859,19 +859,19 @@
                 normal: { name: 'Breakneck Blitz', crystal: 'Normalium Z', gif: null },
                 fire: { name: 'Inferno Overdrive', crystal: 'Firium Z', gif: 'https://media1.tenor.com/m/LAtCnutZvfAAAAAC/inferno-overdrive-z-move.gif' },
                 water: { name: 'Hydro Vortex', crystal: 'Waterium Z', gif: 'https://media1.tenor.com/m/V_2DApw8VNoAAAAC/hydro-vortex.gif' },
-                electric: { name: 'Gigavolt Havoc', crystal: 'Electrium Z', gif: null },
+                electric: { name: 'Gigavolt Havoc', crystal: 'Electrium Z', gif: 'https://media1.tenor.com/m/Nv8GfksWG_4AAAAC/ash-pikachu.gif' },
                 grass: { name: 'Bloom Doom', crystal: 'Grassium Z', gif: null },
                 ice: { name: 'Subzero Slammer', crystal: 'Icium Z', gif: null },
                 fighting: { name: 'All-Out Pummeling', crystal: 'Fightinium Z', gif: null },
                 poison: { name: 'Acid Downpour', crystal: 'Poisonium Z', gif: null },
                 ground: { name: 'Tectonic Rage', crystal: 'Groundium Z', gif: null },
-                flying: { name: 'Supersonic Skystrike', crystal: 'Flyinium Z', gif: null },
+                flying: { name: 'Supersonic Skystrike', crystal: 'Flyinium Z', gif: 'https://media1.tenor.com/m/naluzpU3a38AAAAC/supersonic-skystrike-z-move.gif' },
                 psychic: { name: 'Shattered Psyche', crystal: 'Psychium Z', gif: null },
                 bug: { name: 'Savage Spin-Out', crystal: 'Buginium Z', gif: null },
-                rock: { name: 'Continental Crush', crystal: 'Rockium Z', gif: null },
-                ghost: { name: 'Never-Ending Nightmare', crystal: 'Ghostium Z', gif: null },
-                dragon: { name: 'Devastating Drake', crystal: 'Dragonium Z', gif: null },
-                dark: { name: 'Black Hole Eclipse', crystal: 'Darkinium Z', gif: null },
+                rock: { name: 'Continental Crush', crystal: 'Rockium Z', gif: 'https://media1.tenor.com/m/Bow5YCg5QZMAAAAC/lycanroc-z-move.gif' },
+                ghost: { name: 'Never-Ending Nightmare', crystal: 'Ghostium Z', gif: 'https://media1.tenor.com/m/mnuhbhqPaIEAAAAC/zoroark-z-move.gif' },
+                dragon: { name: 'Devastating Drake', crystal: 'Dragonium Z', gif: 'https://media1.tenor.com/m/Ia7O2vTbLEoAAAAC/lycanroc-midnight-lycanroc.gif' },
+                dark: { name: 'Black Hole Eclipse', crystal: 'Darkinium Z', gif: 'https://media1.tenor.com/m/IhHa4nwinlQAAAAC/z-move-black-hole-eclipse.gif' },
                 steel: { name: 'Corkscrew Crash', crystal: 'Steelium Z', gif: null },
                 fairy: { name: 'Twinkle Tackle', crystal: 'Fairium Z', gif: null }
             };
@@ -886,11 +886,11 @@
                 'pikachu-kalos-cap': { name: '10,000,000 Volt Thunderbolt', crystal: 'Pikashunium Z', baseMove: 'Thunderbolt' },
                 'pikachu-alola-cap': { name: '10,000,000 Volt Thunderbolt', crystal: 'Pikashunium Z', baseMove: 'Thunderbolt' },
                 'pikachu-partner-cap': { name: '10,000,000 Volt Thunderbolt', crystal: 'Pikashunium Z', baseMove: 'Thunderbolt' },
-                'raichu-alola': { name: 'Stoked Sparksurfer', crystal: 'Aloraichium Z', baseMove: 'Thunderbolt' },
+                'raichu-alola': { name: 'Stoked Sparksurfer', crystal: 'Aloraichium Z', baseMove: 'Thunderbolt', gif: 'https://media1.tenor.com/m/hZXSfptOC6UAAAAC/stoked-sparksurfer-z-moves.gif' },
                 'eevee': { name: 'Extreme Evoboost', crystal: 'Eevium Z', baseMove: 'Last Resort' },
                 'snorlax': { name: 'Pulverizing Pancake', crystal: 'Snorlium Z', baseMove: 'Giga Impact' },
                 'mew': { name: 'Genesis Supernova', crystal: 'Mewnium Z', baseMove: 'Psychic' },
-                'decidueye': { name: 'Sinister Arrow Raid', crystal: 'Decidium Z', baseMove: 'Spirit Shackle' },
+                'decidueye': { name: 'Sinister Arrow Raid', crystal: 'Decidium Z', baseMove: 'Spirit Shackle', gif: 'https://media1.tenor.com/m/JStK_9scr-8AAAAC/decidueye-pokemon.gif' },
                 'incineroar': { name: 'Malicious Moonsault', crystal: 'Incinium Z', baseMove: 'Darkest Lariat' },
                 'primarina': { name: 'Oceanic Operetta', crystal: 'Primarium Z', baseMove: 'Sparkling Aria' },
                 'lycanroc': { name: 'Splintered Stormshards', crystal: 'Lycanium Z', baseMove: 'Stone Edge' },
@@ -1330,6 +1330,16 @@
                                         <div className="space-y-2">
                                             {zMoves.signature.map((zMove, idx) => (
                                                 <div key={idx} className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-4 border-2 border-black shadow-md">
+                                                    {zMove.gif && (
+                                                        <div className="mb-3 rounded-lg overflow-hidden border-2 border-black">
+                                                            <img
+                                                                src={zMove.gif}
+                                                                alt={`${zMove.name} animation`}
+                                                                className="w-full h-32 object-cover"
+                                                                loading="lazy"
+                                                            />
+                                                        </div>
+                                                    )}
                                                     <div className="flex justify-between items-start flex-wrap gap-2">
                                                         <div>
                                                             <span className="font-black text-lg text-gray-800">{zMove.name}</span>
