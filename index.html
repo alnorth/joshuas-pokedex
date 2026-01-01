@@ -856,24 +856,24 @@
 
             // Z-Moves data
             const typeBasedZMoves = {
-                normal: { name: 'Breakneck Blitz', crystal: 'Normalium Z' },
-                fire: { name: 'Inferno Overdrive', crystal: 'Firium Z' },
-                water: { name: 'Hydro Vortex', crystal: 'Waterium Z' },
-                electric: { name: 'Gigavolt Havoc', crystal: 'Electrium Z' },
-                grass: { name: 'Bloom Doom', crystal: 'Grassium Z' },
-                ice: { name: 'Subzero Slammer', crystal: 'Icium Z' },
-                fighting: { name: 'All-Out Pummeling', crystal: 'Fightinium Z' },
-                poison: { name: 'Acid Downpour', crystal: 'Poisonium Z' },
-                ground: { name: 'Tectonic Rage', crystal: 'Groundium Z' },
-                flying: { name: 'Supersonic Skystrike', crystal: 'Flyinium Z' },
-                psychic: { name: 'Shattered Psyche', crystal: 'Psychium Z' },
-                bug: { name: 'Savage Spin-Out', crystal: 'Buginium Z' },
-                rock: { name: 'Continental Crush', crystal: 'Rockium Z' },
-                ghost: { name: 'Never-Ending Nightmare', crystal: 'Ghostium Z' },
-                dragon: { name: 'Devastating Drake', crystal: 'Dragonium Z' },
-                dark: { name: 'Black Hole Eclipse', crystal: 'Darkinium Z' },
-                steel: { name: 'Corkscrew Crash', crystal: 'Steelium Z' },
-                fairy: { name: 'Twinkle Tackle', crystal: 'Fairium Z' }
+                normal: { name: 'Breakneck Blitz', crystal: 'Normalium Z', gif: null },
+                fire: { name: 'Inferno Overdrive', crystal: 'Firium Z', gif: 'https://media1.tenor.com/m/LAtCnutZvfAAAAAC/inferno-overdrive-z-move.gif' },
+                water: { name: 'Hydro Vortex', crystal: 'Waterium Z', gif: 'https://media1.tenor.com/m/V_2DApw8VNoAAAAC/hydro-vortex.gif' },
+                electric: { name: 'Gigavolt Havoc', crystal: 'Electrium Z', gif: null },
+                grass: { name: 'Bloom Doom', crystal: 'Grassium Z', gif: null },
+                ice: { name: 'Subzero Slammer', crystal: 'Icium Z', gif: null },
+                fighting: { name: 'All-Out Pummeling', crystal: 'Fightinium Z', gif: null },
+                poison: { name: 'Acid Downpour', crystal: 'Poisonium Z', gif: null },
+                ground: { name: 'Tectonic Rage', crystal: 'Groundium Z', gif: null },
+                flying: { name: 'Supersonic Skystrike', crystal: 'Flyinium Z', gif: null },
+                psychic: { name: 'Shattered Psyche', crystal: 'Psychium Z', gif: null },
+                bug: { name: 'Savage Spin-Out', crystal: 'Buginium Z', gif: null },
+                rock: { name: 'Continental Crush', crystal: 'Rockium Z', gif: null },
+                ghost: { name: 'Never-Ending Nightmare', crystal: 'Ghostium Z', gif: null },
+                dragon: { name: 'Devastating Drake', crystal: 'Dragonium Z', gif: null },
+                dark: { name: 'Black Hole Eclipse', crystal: 'Darkinium Z', gif: null },
+                steel: { name: 'Corkscrew Crash', crystal: 'Steelium Z', gif: null },
+                fairy: { name: 'Twinkle Tackle', crystal: 'Fairium Z', gif: null }
             };
 
             // Signature Z-Moves mapped by Pokemon species name
@@ -1355,6 +1355,16 @@
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                             {zMoves.typeBased.map((zMove, idx) => (
                                                 <div key={idx} className="bg-white rounded-lg p-3 border-2 border-black shadow-sm">
+                                                    {zMove.gif && (
+                                                        <div className="mb-2 rounded overflow-hidden border border-gray-300">
+                                                            <img
+                                                                src={zMove.gif}
+                                                                alt={`${zMove.name} animation`}
+                                                                className="w-full h-32 object-cover"
+                                                                loading="lazy"
+                                                            />
+                                                        </div>
+                                                    )}
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <span
                                                             className="px-2 py-1 rounded text-white font-bold text-xs uppercase border border-black"
