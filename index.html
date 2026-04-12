@@ -692,8 +692,23 @@
                                         fetchEvolutionChain={fetchEvolutionChain}
                                         typeColors={typeColors}
                                         onClose={() => setSelectedPokemon(null)}
-                                        onSelectPokemon={(pokemonId) => {
-                                            const pokemon = pokemonData.find(p => p.id === pokemonId);
+                                        onSelectPokemon={async (pokemonId) => {
+                                            let pokemon = pokemonData.find(p => p.id === pokemonId);
+                                            if (!pokemon) {
+                                                try {
+                                                    const resp = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+                                                    if (resp.ok) {
+                                                        const data = await resp.json();
+                                                        pokemon = {
+                                                            id: data.id,
+                                                            name: data.name,
+                                                            types: data.types.map(t => t.type.name)
+                                                        };
+                                                    }
+                                                } catch (e) {
+                                                    return;
+                                                }
+                                            }
                                             if (pokemon) setSelectedPokemon(pokemon);
                                         }}
                                     />
@@ -793,6 +808,8 @@
             const [loadingMoves, setLoadingMoves] = useState(true);
             const [zMoves, setZMoves] = useState({ signature: [], typeBased: [] });
             const [maxMoves, setMaxMoves] = useState({ gmax: null, typeBased: [] });
+            const [megaEvolutions, setMegaEvolutions] = useState([]);
+            const [megaBase, setMegaBase] = useState(null);
 
             // Max Moves data (Sword/Shield Dynamax)
             const typeBasedMaxMoves = {
@@ -1093,6 +1110,45 @@
                     const chain = await fetchEvolutionChain(pokemon.id);
                     setEvolutionChain(chain || []);
                     setLoadingEvolution(false);
+
+                    // Fetch mega evolutions from species varieties
+                    setMegaEvolutions([]);
+                    setMegaBase(null);
+                    try {
+                        // For mega/primal forms, derive the base name to fetch the correct species
+                        const isMegaOrPrimal = pokemon.name.includes('-mega') || pokemon.name.includes('-primal');
+                        const baseIdentifier = isMegaOrPrimal
+                            ? pokemon.name.replace(/-mega.*$/, '').replace(/-primal$/, '')
+                            : pokemon.id;
+
+                        let baseId = pokemon.id;
+                        let baseName = pokemon.name;
+                        if (isMegaOrPrimal) {
+                            const baseResp = await fetch(`https://pokeapi.co/api/v2/pokemon/${baseIdentifier}`);
+                            if (baseResp.ok) {
+                                const baseData = await baseResp.json();
+                                baseId = baseData.id;
+                                baseName = baseData.name;
+                            }
+                        }
+
+                        const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${baseIdentifier}`);
+                        if (speciesResponse.ok) {
+                            const speciesData = await speciesResponse.json();
+                            const megaVarieties = speciesData.varieties
+                                .filter(v => v.pokemon.name.includes('-mega') || v.pokemon.name.includes('-primal'))
+                                .map(v => ({
+                                    id: parseInt(v.pokemon.url.split('/').slice(-2, -1)[0]),
+                                    name: v.pokemon.name
+                                }));
+                            if (megaVarieties.length > 0) {
+                                setMegaBase({ id: baseId, name: baseName });
+                                setMegaEvolutions(megaVarieties);
+                            }
+                        }
+                    } catch (e) {
+                        // silently fail
+                    }
                 };
 
                 fetchPokemonDetails();
@@ -1233,6 +1289,75 @@
                             </div>
                         </div>
                     ) : null}
+
+                    {megaEvolutions.length > 0 && megaBase && (
+                        <div className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl p-8 border-4 border-black mb-8">
+                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">MEGA EVOLUTIONS</h3>
+                            <div className="flex items-center justify-center flex-wrap gap-4">
+                                <div
+                                    className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
+                                    onClick={() => onSelectPokemon(megaBase.id)}
+                                >
+                                    <img
+                                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${megaBase.id}.png`}
+                                        alt={megaBase.name}
+                                        className="w-32 h-32 object-contain mb-2"
+                                        onError={(e) => {
+                                            const fallbacks = [
+                                                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${megaBase.id}.png`,
+                                                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${megaBase.id}.png`
+                                            ];
+                                            const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                            if (attempt < fallbacks.length) {
+                                                e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                e.target.src = fallbacks[attempt];
+                                            } else {
+                                                e.target.style.display = 'none';
+                                            }
+                                        }}
+                                    />
+                                    <span className="text-gray-500 font-black text-sm">#{megaBase.id.toString().padStart(3, '0')}</span>
+                                    <span className="font-black text-xl capitalize text-gray-800">{megaBase.name.replace(/-/g, ' ')}</span>
+                                </div>
+                                {megaEvolutions.map(mega => (
+                                    <React.Fragment key={mega.id}>
+                                        <div className="flex flex-col items-center">
+                                            <ChevronRight className="w-12 h-12 text-blue-600 evolution-arrow" strokeWidth={4} />
+                                            <span className="mt-2 px-4 py-2 bg-blue-400 rounded-full font-black text-sm border-3 border-black shadow-lg text-white">
+                                                {mega.name.includes('-primal') ? 'Primal Reversion' : 'Mega Evolution'}
+                                            </span>
+                                        </div>
+                                        <div
+                                            className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
+                                            onClick={() => onSelectPokemon(mega.id)}
+                                        >
+                                            <img
+                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${mega.id}.png`}
+                                                alt={mega.name}
+                                                className="w-32 h-32 object-contain mb-2"
+                                                onError={(e) => {
+                                                    const fallbacks = [
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${mega.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mega.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${mega.id}.png`
+                                                    ];
+                                                    const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                                    if (attempt < fallbacks.length) {
+                                                        e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                        e.target.src = fallbacks[attempt];
+                                                    } else {
+                                                        e.target.style.display = 'none';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-gray-500 font-black text-sm">#{mega.id.toString().padStart(4, '0')}</span>
+                                            <span className="font-black text-xl capitalize text-gray-800">{mega.name.replace(/-/g, ' ')}</span>
+                                        </div>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-gradient-to-br from-green-100 to-teal-100 rounded-2xl p-8 border-4 border-black mb-8">
                         <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">LEARNABLE MOVES</h3>
