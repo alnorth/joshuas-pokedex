@@ -1115,21 +1115,32 @@
                     setMegaEvolutions([]);
                     setMegaBase(null);
                     try {
-                        // For mega/primal forms, derive the base name to fetch the correct species
                         const isMegaOrPrimal = pokemon.name.includes('-mega') || pokemon.name.includes('-primal');
-                        const baseIdentifier = isMegaOrPrimal
-                            ? pokemon.name.replace(/-mega.*$/, '').replace(/-primal$/, '')
-                            : pokemon.id;
-
+                        let baseIdentifier;
                         let baseId = pokemon.id;
                         let baseName = pokemon.name;
+
                         if (isMegaOrPrimal) {
+                            // Derive base name by stripping mega/primal suffix
+                            baseIdentifier = pokemon.name.replace(/-mega.*$/, '').replace(/-primal$/, '');
                             const baseResp = await fetch(`https://pokeapi.co/api/v2/pokemon/${baseIdentifier}`);
                             if (baseResp.ok) {
                                 const baseData = await baseResp.json();
                                 baseId = baseData.id;
                                 baseName = baseData.name;
                             }
+                        } else if (pokemon.id >= 10000) {
+                            // Alternate form — use species name to find mega varieties,
+                            // but keep this form as the base card in the display
+                            const formResp = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`);
+                            if (formResp.ok) {
+                                const formData = await formResp.json();
+                                baseIdentifier = formData.species.name;
+                                baseId = pokemon.id;
+                                baseName = pokemon.name;
+                            }
+                        } else {
+                            baseIdentifier = pokemon.id;
                         }
 
                         const speciesResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${baseIdentifier}`);
