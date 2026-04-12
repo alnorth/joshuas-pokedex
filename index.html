@@ -810,6 +810,8 @@
             const [maxMoves, setMaxMoves] = useState({ gmax: null, typeBased: [] });
             const [megaEvolutions, setMegaEvolutions] = useState([]);
             const [megaBase, setMegaBase] = useState(null);
+            const [gmaxForms, setGmaxForms] = useState([]);
+            const [gmaxBase, setGmaxBase] = useState(null);
 
             // Max Moves data (Sword/Shield Dynamax)
             const typeBasedMaxMoves = {
@@ -1111,18 +1113,24 @@
                     setEvolutionChain(chain || []);
                     setLoadingEvolution(false);
 
-                    // Fetch mega evolutions from species varieties
+                    // Fetch mega evolutions and gmax forms from species varieties
                     setMegaEvolutions([]);
                     setMegaBase(null);
+                    setGmaxForms([]);
+                    setGmaxBase(null);
                     try {
                         const isMegaOrPrimal = pokemon.name.includes('-mega') || pokemon.name.includes('-primal');
+                        const isGmax = pokemon.name.endsWith('-gmax');
                         let baseIdentifier;
                         let baseId = pokemon.id;
                         let baseName = pokemon.name;
 
-                        if (isMegaOrPrimal) {
-                            // Derive base name by stripping mega/primal suffix
-                            baseIdentifier = pokemon.name.replace(/-mega.*$/, '').replace(/-primal$/, '');
+                        if (isMegaOrPrimal || isGmax) {
+                            // Derive base name by stripping special form suffix
+                            baseIdentifier = pokemon.name
+                                .replace(/-mega.*$/, '')
+                                .replace(/-primal$/, '')
+                                .replace(/-gmax$/, '');
                             const baseResp = await fetch(`https://pokeapi.co/api/v2/pokemon/${baseIdentifier}`);
                             if (baseResp.ok) {
                                 const baseData = await baseResp.json();
@@ -1130,8 +1138,7 @@
                                 baseName = baseData.name;
                             }
                         } else if (pokemon.id >= 10000) {
-                            // Alternate form — use species name to find mega varieties,
-                            // but keep this form as the base card in the display
+                            // Alternate form — use species name, keep current as base display
                             const formResp = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon.id}`);
                             if (formResp.ok) {
                                 const formData = await formResp.json();
@@ -1155,6 +1162,17 @@
                             if (megaVarieties.length > 0) {
                                 setMegaBase({ id: baseId, name: baseName });
                                 setMegaEvolutions(megaVarieties);
+                            }
+
+                            const gmaxVarieties = speciesData.varieties
+                                .filter(v => v.pokemon.name.endsWith('-gmax'))
+                                .map(v => ({
+                                    id: parseInt(v.pokemon.url.split('/').slice(-2, -1)[0]),
+                                    name: v.pokemon.name
+                                }));
+                            if (gmaxVarieties.length > 0) {
+                                setGmaxBase({ id: baseId, name: baseName });
+                                setGmaxForms(gmaxVarieties);
                             }
                         }
                     } catch (e) {
@@ -1363,6 +1381,75 @@
                                             />
                                             <span className="text-gray-500 font-black text-sm">#{mega.id.toString().padStart(4, '0')}</span>
                                             <span className="font-black text-xl capitalize text-gray-800">{mega.name.replace(/-/g, ' ')}</span>
+                                        </div>
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {gmaxForms.length > 0 && gmaxBase && (
+                        <div className="bg-gradient-to-r from-red-100 to-orange-100 rounded-2xl p-8 border-4 border-black mb-8">
+                            <h3 className="font-black text-3xl mb-6 text-gray-800 text-center">GIGANTAMAX</h3>
+                            <div className="flex items-center justify-center flex-wrap gap-4">
+                                <div
+                                    className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
+                                    onClick={() => onSelectPokemon(gmaxBase.id)}
+                                >
+                                    <img
+                                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${gmaxBase.id}.png`}
+                                        alt={gmaxBase.name}
+                                        className="w-32 h-32 object-contain mb-2"
+                                        onError={(e) => {
+                                            const fallbacks = [
+                                                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${gmaxBase.id}.png`,
+                                                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${gmaxBase.id}.png`
+                                            ];
+                                            const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                            if (attempt < fallbacks.length) {
+                                                e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                e.target.src = fallbacks[attempt];
+                                            } else {
+                                                e.target.style.display = 'none';
+                                            }
+                                        }}
+                                    />
+                                    <span className="text-gray-500 font-black text-sm">#{gmaxBase.id.toString().padStart(3, '0')}</span>
+                                    <span className="font-black text-xl capitalize text-gray-800">{gmaxBase.name.replace(/-/g, ' ')}</span>
+                                </div>
+                                {gmaxForms.map(gmax => (
+                                    <React.Fragment key={gmax.id}>
+                                        <div className="flex flex-col items-center">
+                                            <ChevronRight className="w-12 h-12 text-red-600 evolution-arrow" strokeWidth={4} />
+                                            <span className="mt-2 px-4 py-2 bg-red-500 rounded-full font-black text-sm border-3 border-black shadow-lg text-white">
+                                                Gigantamax
+                                            </span>
+                                        </div>
+                                        <div
+                                            className="flex flex-col items-center bg-white rounded-2xl p-6 border-4 border-black shadow-xl min-w-[200px] cursor-pointer hover:border-yellow-400 transition-all hover:scale-105"
+                                            onClick={() => onSelectPokemon(gmax.id)}
+                                        >
+                                            <img
+                                                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${gmax.id}.png`}
+                                                alt={gmax.name}
+                                                className="w-32 h-32 object-contain mb-2"
+                                                onError={(e) => {
+                                                    const fallbacks = [
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${gmax.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${gmax.id}.png`,
+                                                        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${gmax.id}.png`
+                                                    ];
+                                                    const attempt = parseInt(e.target.dataset.fallbackAttempt || '0');
+                                                    if (attempt < fallbacks.length) {
+                                                        e.target.dataset.fallbackAttempt = (attempt + 1).toString();
+                                                        e.target.src = fallbacks[attempt];
+                                                    } else {
+                                                        e.target.style.display = 'none';
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-gray-500 font-black text-sm">#{gmax.id.toString().padStart(4, '0')}</span>
+                                            <span className="font-black text-xl capitalize text-gray-800">{gmax.name.replace(/-/g, ' ')}</span>
                                         </div>
                                     </React.Fragment>
                                 ))}
